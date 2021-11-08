@@ -4,6 +4,6 @@
 cmake_minimum_required (VERSION 3.8)
 
 # Добавьте источник в исполняемый файл этого проекта.
-add_executable ("mathbicycle" "math-bicycle.cpp"  "src/Vector.h" "src/Matrix.h"  "src/Matrix.hpp" "src/Vector.hpp" )
+add_executable ("mathbicycle" "math-bicycle.cpp"  "src/Vector.h" "src/Matrix.h"  "src/Matrix.hpp" "src/Vector.hpp" "src/vector2.h")
 
 # TODO: Добавьте тесты и целевые объекты, если это необходимо.

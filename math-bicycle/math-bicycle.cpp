@@ -1,6 +1,9 @@
 ﻿#include <iostream>
 #include "src/Vector.h"
 #include "src/Matrix.h"
+#include "src/vector2.h"
+
+#include <cassert>
 
 using std::cout;
 using std::endl;
@@ -14,8 +17,50 @@ std::ostream& operator<<(std::ostream& out, bm::Row<Length, T> const& vec);
 template <int Rows, int Cols, typename T>
 std::ostream& operator<<(std::ostream& out, bm::Matrix<Rows, Cols, T> const& mat);
 
+
+#define TEST_BINARY_OPERATOR(OP, Len) \
+{ \
+	float arr1[Len], arr2[Len], arr3[Len]; \
+	for (int i = 0; i < Len; ++i) { \
+		arr1[i] = static_cast<float>(rand() % 100); \
+		arr2[i] = static_cast<float>(rand() % 100 + 1); \
+		arr3[i] = arr1[i] OP arr2[i]; \
+	} \
+	bm::Vector_<Len> vec1(arr1), vec2(arr2), vec3(arr3); \
+	bm::Vector_Base<2> vecBase; \
+	auto vecSum = vec1 OP vec2; \
+	assert(vecSum == vec3); \
+}
+
+void foo() {
+
+	//Vector<3> vec3(1, 2, 3), vec3another(3, 2, 1);
+	//Vector<3> vec3sum = vec3 + vec3another;
+	//vec3.x = 10;
+	//cout << vec3.vals[0] << endl;
+	//cout << vec3sum.x << ' ' << vec3sum.y << ' ' << vec3sum.z << endl;
+	//Vector<4> vec4(1, 2, 3, 4), vec4_(4, 3, 2, 1);
+
+	//cout << vec4.x << ' ' << vec4.y << ' ' << vec4.z << ' ' << vec4.w << endl;
+	//cout << vec4Sum.vals[0] << ' ' << vec4Sum.vals[1] << ' ' << vec4Sum.vals[2] << ' ' << vec4Sum.vals[3] << endl;
+
+
+	//Vector<10> vec10({ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 });
+}
+
+
+// додати тести
+// 
 int main()
 {
+	bm::Vec3 vec1(1, 2, 0), vec2(0, 1, 0);
+	auto prod = vec1 / 2;
+	cout << prod.x << ' ' << prod.y << ' ' << prod.z << endl;
+	TEST_BINARY_OPERATOR(+, 4);
+	TEST_BINARY_OPERATOR(-, 4);
+	TEST_BINARY_OPERATOR(/, 4);
+	TEST_BINARY_OPERATOR(*, 4);
+	/*
 	double
 	vec_elements_4[] = { 1., 2., 3., 5. },
 	z_vec_elements[] = { 0., 0., 1. },
@@ -87,7 +132,7 @@ int main()
 
 		<< "matrix * vector:" << endl
 		<< mat_4_4 * vec_4 << endl << endl;
-	
+	*/
  	return 0;
 }
 

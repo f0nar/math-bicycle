@@ -50,6 +50,7 @@ namespace bm {
 	class Matrix<Rows, Cols, T, true> : public Matrix<Rows, Cols, T, false> {
 	public:
 
+		Matrix() : Matrix<Rows, Cols, T, false>() {}
 		Matrix(T* data) : Matrix<Rows, Cols, T, false>(data) {}
 
 		Matrix<Cols, Rows, T, true> inv() const;

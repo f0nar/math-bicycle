@@ -7,7 +7,7 @@ namespace bm {
 	namespace {
 
 		template <int Rows, int Cols, typename T, bool isSquare>
-		T _det(Matrix<Rows, Cols, T> mat) {
+		T _det(Matrix<Rows, Cols, T, isSquare> mat) {
 			bool inverted = false;
 			for (int i = 0; i < Rows - 1; ++i) {
 				// ask Dmytro if I need to make mat[i][i] != T() comparison
@@ -44,7 +44,7 @@ namespace bm {
 
 
 		template <int Rows, int Cols, typename T, bool isSquare>
-		bm::Matrix<Cols, Rows, T> _invert(bm::Matrix<Rows, Cols, T> mat) {
+		bm::Matrix<Cols, Rows, T, isSquare> _invert(bm::Matrix<Rows, Cols, T> mat) {
 			bm::Matrix<Rows, Cols, T> identity;
 			for (int i = 0; i < Rows - 1; ++i) {
 				if (!mat[i][i]) {
@@ -183,7 +183,7 @@ namespace bm {
 	}
 
 	template <int Rows, int Cols, typename T, bool isSquare>
-	Matrix<Cols, Rows, T> Matrix<Rows, Cols, T, isSquare>::trans() const {
+	Matrix<Cols, Rows, T, (Cols == Rows)> Matrix<Rows, Cols, T, isSquare>::trans() const {
 		T transposed_arr[Cols * Rows];
 		for (int i = 0; i < Rows; ++i) {
 			for (int j = 0; j < Cols; ++j) {
@@ -209,12 +209,12 @@ namespace bm {
 	template <int Rows, int Cols, typename T>
 	Matrix<Cols, Rows, T, true> Matrix<Rows, Cols, T, true>::inv() const {
 		// Does return optimization work here?
-		return _invert<Cols, Rows, T>(*this);
+		return _invert<Cols, Rows, T, true>(*this);
 	}
 
 	template <int Rows, int Cols, typename T>
 	T Matrix<Rows, Cols, T, true>::det() const {
-		return _det<Rows, Cols, T>(*this);
+		return _det<Rows, Cols, T, true>(*this);
 	}
 
 	template <typename T, int Rows, int Cols1, int Cols2>

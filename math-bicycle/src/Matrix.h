@@ -1,6 +1,9 @@
 #ifndef _BICYCLE_MATRIX_H_
 #define _BICYCLE_MATRIX_H_
 
+#include <type_traits>
+#include "Vector.h"
+
 namespace bm {
 
 	template <int Rows, int Cols, typename T>
@@ -87,9 +90,9 @@ namespace bm {
 
 	};
 
-		// how to instantiate Row for const T? It doesnt require scale, add, swap, ...
-		// Can I do next: template <int Len, typename T> class Row <Len, const T> ?
-		// Maybe we dont need Row class at all, it is vector. Ask Dmytro
+	// how to instantiate Row for const T? It doesnt require scale, add, swap, ...
+	// Can I do next: template <int Len, typename T> class Row <Len, const T> ?
+	// Maybe we dont need Row class at all, it is vector. Ask Dmytro
 	template <int Len, typename T>
 	class Row {
 	public:
@@ -159,6 +162,14 @@ namespace bm {
 			return Row<Cols, const T>(m_vals + i * Cols);
 		}
 
+		T& at(int i, int j) {
+			return m_vals[i * Cols + j];
+		}
+
+		T const & at(int i, int j) const {
+			return m_vals[i * Cols + j];
+		}
+
 	protected:
 
 		T m_vals[Rows * Cols] = { T() };
@@ -188,16 +199,80 @@ namespace bm {
 	struct Matrix : MatrixSpec<Rows, Cols, T> {
 		using MatrixSpec<Rows, Cols, T>::MatrixSpec;
 
-		Matrix trans() const {
-			T transposed_arr[Cols * Rows];
+		Matrix<Cols, Rows, T> trans() const {
+			Matrix<Cols, Rows, T> resMat;
 			for (int i = 0; i < Rows; ++i) {
 				for (int j = 0; j < Cols; ++j) {
-					int const index = i * Cols + j;
-					int const transposed_index = j * Rows + i;
-					transposed_arr[transposed_index] = m_data[index];
+					resMat.at(j, i) = at(i, j);
 				}
 			}
-			return Matrix(transposed_arr);
+			return resMat;
+		}
+
+		template <int OtherCols>
+		Matrix<Rows, OtherCols, T> operator*(Matrix<Cols, OtherCols, T> const& other) const {
+			Matrix<Rows, OtherCols, T> resMat;
+			for (int i = 0; i < Rows; ++i) {
+				for (int j = 0; j < OtherCols; ++j) {
+					resMat.at(i, j) = at(i, 0) * other.at(0, j);
+					for (int k = 1; k < Cols; ++k) {
+						resMat.at(i, j) = resMat.at(i, j) + at(i, k) * other.at(k, j);
+					}
+				}
+			}
+			return resMat;
+		}
+
+		Matrix operator+(Matrix const& other) const {
+			Matrix resMat;
+			for (int i = 0; i < Rows; ++i) {
+				for (int j = 0; j < Cols; ++j) {
+					resMat.at(i, j) = at(i, j) + other.at(i, j);
+				}
+			}
+			return resMat;
+		}
+
+		Matrix operator-(Matrix const& other) const {
+			Matrix resMat;
+			for (int i = 0; i < Rows; ++i) {
+				for (int j = 0; j < Cols; ++j) {
+					resMat.at(i, j) = at(i, j) - other.at(i, j);
+				}
+			}
+			return resMat;
+		}
+
+		Matrix operator*(T scale) const {
+			Matrix resMat;
+			for (int i = 0; i < Rows; ++i) {
+				for (int j = 0; j < Cols; ++j) {
+					resMat.at(i, j) = at(i, j) * scale;
+				}
+			}
+			return resMat;
+		}
+
+		Matrix operator/(T scale) const {
+			Matrix resMat;
+			for (int i = 0; i < Rows; ++i) {
+				for (int j = 0; j < Cols; ++j) {
+					resMat.at(i, j) = at(i, j) / scale;
+				}
+			}
+			return resMat;
+		}
+
+		Vector<Rows, T> operator*(Vector<Cols, T> const& vec) const {
+			Vector<Rows, T> resVec;
+			for (int i = 0; i < Rows; ++i) {
+				resVec[i] = at(i, 0) * vec.at(0);
+				for (int j = 1; j < Cols; ++j) {
+					resVec[i] = resVec[i] + at(i, j) * vec.at(j);
+				}
+			}
+
+			return resVec;
 		}
 	};
 }

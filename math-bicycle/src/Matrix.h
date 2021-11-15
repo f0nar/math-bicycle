@@ -9,16 +9,19 @@ namespace bm {
 	template <int Rows, int Cols, typename T>
 	struct Matrix;
 
+	template <int Rows, int Cols, typename T, typename IsSquare>
+	struct MatrixSpec;
+
 	namespace {
 
-		template <int Rows, int Cols, typename T, bool isSquare>
-		T _det(Matrix<Rows, Cols, T> mat) {
+		template <int Dim, typename T>
+		T _det(MatrixSpec<Dim, Dim, T, void> mat) {
 			bool inverted = false;
-			for (int i = 0; i < Rows - 1; ++i) {
+			for (int i = 0; i < Dim - 1; ++i) {
 				// ask Dmytro if I need to make mat[i][i] != T() comparison
 				if (!mat[i][i]) {
 					bool swaped = false;
-					for (int j = i + 1; j < Rows; ++j) {
+					for (int j = i + 1; j < Dim; ++j) {
 						if (mat[j][i]) {
 							mat[j].swap(mat[i]);
 							swaped = true;
@@ -32,14 +35,14 @@ namespace bm {
 						inverted = !inverted;
 					}
 				}
-				for (int j = i + 1; j < Rows; ++j) {
+				for (int j = i + 1; j < Dim; ++j) {
 					if (mat[j][i]) {
 						mat[j].addScaled(mat[i], -(mat[j][i] / mat[i][i]));
 					}
 				}
 			}
 			T det = mat[0][0];
-			for (int i = 1; i < Rows; ++i) {
+			for (int i = 1; i < Dim; ++i) {
 				det *= mat[i][i];
 			}
 			// unar minus sign
@@ -48,12 +51,12 @@ namespace bm {
 		}
 
 
-		template <int Rows, int Cols, typename T, bool isSquare>
-		Matrix<Cols, Rows, T> _invert(Matrix<Rows, Cols, T> mat) {
-			Matrix<Rows, Cols, T> identity;
-			for (int i = 0; i < Rows - 1; ++i) {
+		template <int Dim, typename T>
+		Matrix<Dim, Dim, T> _invert(MatrixSpec<Dim, Dim, T, void> mat) {
+			Matrix<Dim, Dim, T> identity;
+			for (int i = 0; i < Dim - 1; ++i) {
 				if (!mat[i][i]) {
-					for (int j = i + 1; j < Rows; ++j) {
+					for (int j = i + 1; j < Dim; ++j) {
 						if (mat[j][i]) {
 							mat[j].swap(mat[i]);
 							identity[j].swap(identity[i]);
@@ -61,7 +64,7 @@ namespace bm {
 						}
 					}
 				}
-				for (int j = i + 1; j < Rows; ++j) {
+				for (int j = i + 1; j < Dim; ++j) {
 					if (mat[j][i]) {
 						const T scale = -(mat[j][i] / mat[i][i]);
 						mat[j].addScaled(mat[i], scale);
@@ -69,7 +72,7 @@ namespace bm {
 					}
 				}
 			}
-			for (int i = Rows - 1; i > 0; --i) {
+			for (int i = Dim - 1; i > 0; --i) {
 				for (int j = i - 1; j >= 0; --j) {
 					if (mat[j][i]) {
 						const T scale = -(mat[j][i] / mat[i][i]);
@@ -79,7 +82,7 @@ namespace bm {
 					}
 				}
 			}
-			for (int i = 0; i < Rows; ++i) {
+			for (int i = 0; i < Dim; ++i) {
 				const T scale = mat[i][i];
 				mat[i][i] /= scale;
 				identity[i].scale(scale, false);
@@ -120,7 +123,7 @@ namespace bm {
 			else for (int i = 0; i < Len; ++i) m_row_data[i] = m_row_data[i] + row.at(i) / s;
 		}
 
-		void swap(bm::Row<Len, T>& row) {
+		void swap(bm::Row<Len, T>& other) {
 			for (int i = 0; i < Len; ++i) {
 				T& temp = m_row_data[i];
 				m_row_data[i] = other[i];
@@ -132,10 +135,31 @@ namespace bm {
 		T* m_row_data;
 	};
 
+	template <int Rows, int Cols, typename T, typename IsArithmeticSquare = void>
+	struct InitMatrixDefault
+	{
+		void init(T(&matrix_array)[Rows * Cols]) { }
+	};
+
+	template <int Rows, int Cols, typename T>
+	struct InitMatrixDefault<Rows, Cols, T, std::enable_if_t<(Rows == Cols && std::is_arithmetic<T>::value)>>
+	{
+		void init(T(&matrix_array)[Rows * Cols]) {
+			T const diagonal_value = static_cast<T>(1);
+			for (int i = 0; i < Rows; ++i) {
+				int const array_index = i * Rows + i;
+				matrix_array[array_index] = diagonal_value;
+			}
+		}
+	};
+
 	template <int Rows, int Cols, typename T>
 	struct MatrixBase {
 
-		MatrixBase() { }
+		MatrixBase() {
+			InitMatrixDefault<Rows, Cols, T> data_initializer;
+			data_initializer.init(m_vals);
+		}
 
 		MatrixBase(T(&data)[Rows * Cols]) {
 			for (int i = 0; i < Rows; ++i) {
@@ -187,11 +211,11 @@ namespace bm {
 		using MatrixBase<Rows, Cols, T>::MatrixBase;
 
 		Matrix<Cols, Rows, T> inv() const {
-			return _invert<Cols, Rows, T, true>(*this);
+			return _invert<Cols, T>(*this);
 		}
 
 		T det() const {
-			return _det<Rows, Cols, T, true>(*this);
+			return _det<Rows, T>(*this);
 		}
 	};
 
@@ -275,6 +299,42 @@ namespace bm {
 			return resVec;
 		}
 	};
+
+	template <int Rows, int Cols, typename T>
+	bool equals(Matrix<Rows, Cols, T> const& mat1, Matrix<Rows, Cols, T> const& mat2, T const &delta = T()) {
+		if (&mat1 == &mat2)
+			return true;
+
+		for (int i = 0; i < Rows; ++i) {
+			for (int j = 0; j < Cols; ++j) {
+				T const& mat1ij = mat1.at(i, j);
+				T const& mat2ij = mat2.at(i, j);
+				if (
+					!(mat1ij <= mat2ij + delta && mat2ij <= mat1ij + delta) &&
+					!(mat2ij <= mat1ij + delta && mat1ij <= mat2ij + delta)) {
+					return false;
+				}
+			}
+		}
+
+		return true;
+	}
+
+	using Matrix4f = Matrix<4, 4, float>;
+	using Matrix3f = Matrix<3, 3, float>;
+	using Matrix2f = Matrix<2, 2, float>;
+
+	using Matrix4d = Matrix<4, 4, double>;
+	using Matrix3d = Matrix<3, 3, double>;
+	using Matrix2d = Matrix<2, 2, double>;
+
+	using Matrix4i = Matrix<4, 4, int>;
+	using Matrix3i = Matrix<3, 3, int>;
+	using Matrix2i = Matrix<2, 2, int>;
+
+	using Matrix4ui = Matrix<4, 4, unsigned int>;
+	using Matrix3ui = Matrix<3, 3, unsigned int>;
+	using Matrix2ui = Matrix<2, 2, unsigned int>;
 }
 
 #endif // _BICYCLE_MATRIX_H_

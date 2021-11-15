@@ -1,5 +1,5 @@
-#ifndef _BICYCLE_VectorH_
-#define _BICYCLE_VectorH_
+#ifndef _BICYCLE_VECTOR_H_
+#define _BICYCLE_VECTOR_H_
 
 #include <type_traits>
 #include <string>
@@ -11,7 +11,6 @@ namespace bm {
 	template <int Len, typename T>
 	struct Vector;
 
-	#define TEMPLATE_VECTOR Vector<Len, T>
 	#define BINARY_OPERATOR(OP, OTHER_T, OTHER_ACCES) \
 	auto operator OP(OTHER_T const& other) const { \
 		Vector<Len, T> res; \
@@ -57,21 +56,27 @@ namespace bm {
 				fill_array(vals, args...);
 			}
 
+			#define TEMPLATE_VECTOR Vector<Len, T>
 			BINARY_OPERATOR(+, TEMPLATE_VECTOR, .vals[i]);
 			BINARY_OPERATOR(-, TEMPLATE_VECTOR, .vals[i]);
 			BINARY_OPERATOR(*, TEMPLATE_VECTOR, .vals[i]);
 			BINARY_OPERATOR(/, TEMPLATE_VECTOR, .vals[i]);
-			BINARY_OPERATOR(/ , float);
-			BINARY_OPERATOR(* , float);
+			BINARY_OPERATOR(/, float);
+			BINARY_OPERATOR(*, float);
 
-			T at(int index) const {
+			T const &at(int index) const {
 				assert(index >= 0 && index < Len);
 				return vals[index];
 			}
 
-			float dot() const {
-				T res = this->vals[0] * this->vals[0];
-				for (int i = 1; i < Len; ++i) res = std::fma(this->vals[i], this->vals[i], res);
+			T& operator[](int index) {
+				assert(index >= 0 && index < Len);
+				return vals[index];
+			}
+
+			auto dot(Vector<Len, T> const &other) const {
+				auto res = this->vals[0] * other.vals[0];
+				for (int i = 1; i < Len; ++i) res = std::fma(this->vals[i], other.vals[i], res);
 				return res;
 			}
 
@@ -143,14 +148,39 @@ namespace bm {
 		float& y = this->vals[1];
 	};
 
-	using Vector4 = Vector<4, float>;
-	using Vector3 = Vector<3, float>;
-	using Vector2 = Vector<2, float>;
+	template <int Len, typename T>
+	bool equals(Vector<Len, T> const& vec1, Vector<Len, T> const& vec2, T delta = T()) {
+		if (&vec1 == &vec2)
+			return true;
+
+		for (int i = 0; i < Len; ++i) {
+			T const& vec1i = vec1.at(i);
+			T const& vec2i = vec2.at(i);
+			if (
+				!(vec1i <= vec2i + delta && vec2i <= vec1i + delta) &&
+				!(vec2i <= vec1i + delta && vec1i <= vec2i + delta)) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	using Vector4f = Vector<4, float>;
+	using Vector3f = Vector<3, float>;
+	using Vector2f = Vector<2, float>;
 
 	using Vector4d = Vector<4, double>;
 	using Vector3d = Vector<3, double>;
 	using Vector2d = Vector<2, double>;
 
+	using Vector4i = Vector<4, int>;
+	using Vector3i = Vector<3, int>;
+	using Vector2i = Vector<2, int>;
+
+	using Vector4ui = Vector<4, unsigned int>;
+	using Vector3ui = Vector<3, unsigned int>;
+	using Vector2ui = Vector<2, unsigned int>;
 };
 
-#endif // !_BICYCLE_VectorH_
+#endif // !_BICYCLE_VECTOR_H_

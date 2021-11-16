@@ -11,37 +11,24 @@ namespace bm {
 	template <int Len, typename T>
 	struct Vector;
 
-	#define BINARY_OPERATOR(OP, OTHER_T, OTHER_ACCES) \
-	auto operator OP(OTHER_T const& other) const { \
-		Vector<Len, T> res; \
-		for (int i = 0; i < Len; ++i) { \
-			res.vals[i] = this->vals[i] OP other OTHER_ACCES; \
-		} \
-		return res; \
-	}
+	class _VectorInternal {
 
-	namespace {
+		template <int Len, typename T>
+		friend struct Vector;
 
-		template <typename T, int Len, typename ...Ts>
-		std::enable_if_t<(sizeof...(Ts) == Len)> fill_array(T (&data)[Len], Ts ...args) {
-			init_array(data, 0, args...);
-		}
-
-		template <typename T, typename E, typename ...Ts>
-		void init_array(T* data_ptr, int index, E elem, Ts ...args) {
-			data_ptr[index] = T(elem);
-			init_array(data_ptr, index + 1, args...);
-		}
-
-		template <typename T, typename E>
-		void init_array(T* data_ptr, int index, E elem) {
-			data_ptr[index] = T(elem);
+		#define BINARY_OPERATOR(OP, OTHER_T, OTHER_ACCES) \
+		auto operator OP(OTHER_T const& other) const { \
+			Vector<Len, T> res; \
+			for (int i = 0; i < Len; ++i) { \
+				res.vals[i] = this->vals[i] OP other OTHER_ACCES; \
+			} \
+				return res; \
 		}
 
 		template <int Len, typename T>
 		struct VectorBase {
 
-			VectorBase() { }
+			VectorBase() : vals{ T() } { }
 
 			VectorBase(T const (&data)[Len]) {
 				for (int i = 0; i < Len; ++i) {
@@ -49,11 +36,9 @@ namespace bm {
 				}
 			}
 
-			// TODO генерувати конструктор відносно кількості параметрів
 			template <typename ...Ts>
-			VectorBase(Ts ... args) {
-				static_assert(sizeof...(args) == Len, "Number of vector constructor arguments should be equal to its length");
-				fill_array(vals, args...);
+			VectorBase(Ts ... args) : vals{ T(args)... } {
+				static_assert(sizeof...(args) == Len, "Number of vector constructor arguments should be equal to its length.");
 			}
 
 			#define TEMPLATE_VECTOR Vector<Len, T>
@@ -93,22 +78,22 @@ namespace bm {
 
 		protected:
 
-			T vals[Len] = { T() };
+			T vals[Len];
 
 		};
 	};
 
 	template <int Len = 3, typename T = float>
-	struct Vector : VectorBase<Len, T> {
-		using VectorBase<Len, T>::VectorBase;
+	struct Vector : _VectorInternal::VectorBase<Len, T> {
+		using _VectorInternal::VectorBase<Len, T>::VectorBase;
 	};
 
 	template <typename T>
-	struct Vector<4, T> : VectorBase<4, T> {
+	struct Vector<4, T> : _VectorInternal::VectorBase<4, T> {
 
-		using VectorBase<4, T>::VectorBase;
+		using _VectorInternal::VectorBase<4, T>::VectorBase;
 
-		Vector(Vector const& other) : Vector(other.x, other.y, other.z, other.w) {} 
+		Vector(Vector const& other) : Vector(other.x, other.y, other.z, other.w) {}
 
 		float& x = this->vals[0];
 		float& y = this->vals[1];
@@ -117,12 +102,11 @@ namespace bm {
 	};
 
 	template <typename T>
-	struct Vector<3, T> : VectorBase<3, T>
-	{
+	struct Vector<3, T> : _VectorInternal::VectorBase<3, T> {
 
-		using VectorBase<3, T>::VectorBase;
+		using _VectorInternal::VectorBase<3, T>::VectorBase;
 
-		Vector(Vector const& other) : Vector(other.x, other.y, other.z) {} 
+		Vector(Vector const& other) : Vector(other.x, other.y, other.z) {}
 
 		Vector cross(Vector const& other) const {
 			return Vector({
@@ -138,9 +122,9 @@ namespace bm {
 	};
 
 	template <typename T>
-	struct Vector<2, T> : VectorBase<2, T> {
+	struct Vector<2, T> : _VectorInternal::VectorBase<2, T> {
 
-		using VectorBase<2, T>::VectorBase;
+		using _VectorInternal::VectorBase<2, T>::VectorBase;
 
 		Vector(Vector const& other) : Vector(other.x, other.y) {} 
 

@@ -12,87 +12,6 @@ namespace bm {
 	template <int Rows, int Cols, typename T, typename IsSquare>
 	struct MatrixSpec;
 
-	namespace {
-
-		template <int Dim, typename T>
-		T _det(MatrixSpec<Dim, Dim, T, void> mat) {
-			bool inverted = false;
-			for (int i = 0; i < Dim - 1; ++i) {
-				// ask Dmytro if I need to make mat[i][i] != T() comparison
-				if (!mat[i][i]) {
-					bool swaped = false;
-					for (int j = i + 1; j < Dim; ++j) {
-						if (mat[j][i]) {
-							mat[j].swap(mat[i]);
-							swaped = true;
-							break;
-						}
-					}
-					if (!swaped) {
-						return mat[i][i];
-					}
-					else {
-						inverted = !inverted;
-					}
-				}
-				for (int j = i + 1; j < Dim; ++j) {
-					if (mat[j][i]) {
-						mat[j].addScaled(mat[i], -(mat[j][i] / mat[i][i]));
-					}
-				}
-			}
-			T det = mat[0][0];
-			for (int i = 1; i < Dim; ++i) {
-				det *= mat[i][i];
-			}
-			// unar minus sign
-			// is it ok?
-			return inverted ? -det : det;
-		}
-
-
-		template <int Dim, typename T>
-		Matrix<Dim, Dim, T> _invert(MatrixSpec<Dim, Dim, T, void> mat) {
-			Matrix<Dim, Dim, T> identity;
-			for (int i = 0; i < Dim - 1; ++i) {
-				if (!mat[i][i]) {
-					for (int j = i + 1; j < Dim; ++j) {
-						if (mat[j][i]) {
-							mat[j].swap(mat[i]);
-							identity[j].swap(identity[i]);
-							break;
-						}
-					}
-				}
-				for (int j = i + 1; j < Dim; ++j) {
-					if (mat[j][i]) {
-						const T scale = -(mat[j][i] / mat[i][i]);
-						mat[j].addScaled(mat[i], scale);
-						identity[j].addScaled(identity[i], scale);
-					}
-				}
-			}
-			for (int i = Dim - 1; i > 0; --i) {
-				for (int j = i - 1; j >= 0; --j) {
-					if (mat[j][i]) {
-						const T scale = -(mat[j][i] / mat[i][i]);
-						// here we need to add only one element then all row
-						mat[j].addScaled(mat[i], scale);
-						identity[j].addScaled(identity[i], scale);
-					}
-				}
-			}
-			for (int i = 0; i < Dim; ++i) {
-				const T scale = mat[i][i];
-				mat[i][i] /= scale;
-				identity[i].scale(scale, false);
-			}
-
-			return identity;
-		}
-
-	};
-
 	// how to instantiate Row for const T? It doesnt require scale, add, swap, ...
 	// Can I do next: template <int Len, typename T> class Row <Len, const T> ?
 	// Maybe we dont need Row class at all, it is vector. Ask Dmytro
@@ -135,93 +54,167 @@ namespace bm {
 		T* m_row_data;
 	};
 
-	template <int Rows, int Cols, typename T, typename IsArithmeticSquare = void>
-	struct InitMatrixDefault
-	{
-		void init(T(&matrix_array)[Rows * Cols]) { }
-	};
+	class _MatrixInternal {
 
-	template <int Rows, int Cols, typename T>
-	struct InitMatrixDefault<Rows, Cols, T, std::enable_if_t<(Rows == Cols && std::is_arithmetic<T>::value)>>
-	{
-		void init(T(&matrix_array)[Rows * Cols]) {
-			T const diagonal_value = static_cast<T>(1);
-			for (int i = 0; i < Rows; ++i) {
-				int const array_index = i * Rows + i;
-				matrix_array[array_index] = diagonal_value;
-			}
-		}
-	};
+		template <int Rows, int Cols, typename T>
+		friend struct Matrix;
 
-	template <int Rows, int Cols, typename T>
-	struct MatrixBase {
+		template <int Rows, int Cols, typename T, typename IsArithmeticSquare = void>
+		struct InitMatrixDefault
+		{
+			void init(T(&matrix_array)[Rows * Cols]) { }
+		};
 
-		MatrixBase() {
-			InitMatrixDefault<Rows, Cols, T> data_initializer;
-			data_initializer.init(m_vals);
-		}
-
-		MatrixBase(T(&data)[Rows * Cols]) {
-			for (int i = 0; i < Rows; ++i) {
-				int const index = i * Cols;
-				for (int j = 0; j < Cols; ++j) {
-					m_vals[index + j] = T(data[index + j]);
+		template <int Rows, int Cols, typename T>
+		struct InitMatrixDefault<Rows, Cols, T, std::enable_if_t<(Rows == Cols && std::is_arithmetic<T>::value)>>
+		{
+			void init(T(&matrix_array)[Rows * Cols]) {
+				T const diagonal_value = static_cast<T>(1);
+				for (int i = 0; i < Rows; ++i) {
+					int const array_index = i * Rows + i;
+					matrix_array[array_index] = diagonal_value;
 				}
 			}
-		}
+		};
 
-		Row<Cols, T> operator[](int i) {
-			return row(i);
-		}
+		template <int Rows, int Cols, typename T>
+		struct MatrixBase {
 
-		Row<Cols, const T> const at(int i) const {
-			return row(i);
-		}
+			MatrixBase() {
+				InitMatrixDefault<Rows, Cols, T> data_initializer;
+				data_initializer.init(m_vals);
+			}
 
-		Row<Cols, T> row(int i) {
-			return Row<Cols, T>(m_vals + i * Cols);
-		}
+			MatrixBase(T(&data)[Rows * Cols]) {
+				for (int i = 0; i < Rows; ++i) {
+					int const index = i * Cols;
+					for (int j = 0; j < Cols; ++j) {
+						m_vals[index + j] = T(data[index + j]);
+					}
+				}
+			}
 
-		Row<Cols, const T> row(int i) const {
-			return Row<Cols, const T>(m_vals + i * Cols);
-		}
+			Row<Cols, T> operator[](int i) {
+				return row(i);
+			}
 
-		T& at(int i, int j) {
-			return m_vals[i * Cols + j];
-		}
+			Row<Cols, const T> const at(int i) const {
+				return row(i);
+			}
 
-		T const & at(int i, int j) const {
-			return m_vals[i * Cols + j];
-		}
+			Row<Cols, T> row(int i) {
+				return Row<Cols, T>(m_vals + i * Cols);
+			}
 
-	protected:
+			Row<Cols, const T> row(int i) const {
+				return Row<Cols, const T>(m_vals + i * Cols);
+			}
 
-		T m_vals[Rows * Cols] = { T() };
+			T& at(int i, int j) {
+				return m_vals[i * Cols + j];
+			}
 
-	};
+			T const& at(int i, int j) const {
+				return m_vals[i * Cols + j];
+			}
 
-	template <int Rows, int Cols, typename T, typename Square = void>
-	struct MatrixSpec : MatrixBase<Rows, Cols, T> {
-		using MatrixBase<Rows, Cols, T>::MatrixBase;
+		protected:
+
+			T m_vals[Rows * Cols] = { T() };
+
+		};
+
+		template <int Rows, int Cols, typename T, typename Square = void>
+		struct MatrixSpec : MatrixBase<Rows, Cols, T> {
+			using MatrixBase<Rows, Cols, T>::MatrixBase;
+		};
+
+		template <int Rows, int Cols, typename T>
+		struct MatrixSpec<Rows, Cols, T, std::enable_if_t<(Rows == Cols)>> : MatrixBase<Rows, Cols, T> {
+
+			using MatrixBase<Rows, Cols, T>::MatrixBase;
+
+			Matrix<Cols, Rows, T> inv() const {
+				Matrix<Cols, Rows, T> identity, this_copy(*this);
+				for (int i = 0; i < Dim - 1; ++i) {
+					if (!this_copy[i][i]) {
+						for (int j = i + 1; j < Dim; ++j) {
+							if (this_copy[j][i]) {
+								this_copy[j].swap(this_copy[i]);
+								identity[j].swap(identity[i]);
+								break;
+							}
+						}
+					}
+					for (int j = i + 1; j < Dim; ++j) {
+						if (this_copy[j][i]) {
+							const T scale = -(this_copy[j][i] / this_copy[i][i]);
+							this_copy[j].addScaled(this_copy[i], scale);
+							identity[j].addScaled(identity[i], scale);
+						}
+					}
+				}
+				for (int i = Dim - 1; i > 0; --i) {
+					for (int j = i - 1; j >= 0; --j) {
+						if (this_copy[j][i]) {
+							const T scale = -(this_copy[j][i] / this_copy[i][i]);
+							// here we need to add only one element then all row
+							this_copy[j].addScaled(this_copy[i], scale);
+							identity[j].addScaled(identity[i], scale);
+						}
+					}
+				}
+				for (int i = 0; i < Dim; ++i) {
+					const T scale = this_copy[i][i];
+					this_copy[i][i] /= scale;
+					identity[i].scale(scale, false);
+				}
+
+				return identity;
+			}
+
+			T det() const {
+				Matrix<Rows, Cols, T> this_copy(*this);
+				bool inverted = false;
+				for (int i = 0; i < Dim - 1; ++i) {
+					// ask Dmytro if I need to make mat[i][i] != T() comparison
+					if (!this_copy[i][i]) {
+						bool swaped = false;
+						for (int j = i + 1; j < Dim; ++j) {
+							if (this_copy[j][i]) {
+								this_copy[j].swap(this_copy[i]);
+								swaped = true;
+								break;
+							}
+						}
+						if (!swaped) {
+							return this_copy[i][i];
+						}
+						else {
+							inverted = !inverted;
+						}
+					}
+					for (int j = i + 1; j < Dim; ++j) {
+						if (this_copy[j][i]) {
+							this_copy[j].addScaled(this_copy[i], -(this_copy[j][i] / this_copy[i][i]));
+						}
+					}
+				}
+				T det = this_copy[0][0];
+				for (int i = 1; i < Dim; ++i) {
+					det *= this_copy[i][i];
+				}
+				// unar minus sign
+				// is it ok?
+				return inverted ? -det : det;
+			}
+		};
+
 	};
 
 	template <int Rows, int Cols, typename T>
-	struct MatrixSpec<Rows, Cols, T, std::enable_if_t<(Rows == Cols)>> : MatrixBase<Rows, Cols, T> {
-
-		using MatrixBase<Rows, Cols, T>::MatrixBase;
-
-		Matrix<Cols, Rows, T> inv() const {
-			return _invert<Cols, T>(*this);
-		}
-
-		T det() const {
-			return _det<Rows, T>(*this);
-		}
-	};
-
-	template <int Rows, int Cols, typename T>
-	struct Matrix : MatrixSpec<Rows, Cols, T> {
-		using MatrixSpec<Rows, Cols, T>::MatrixSpec;
+	struct Matrix : _MatrixInternal::MatrixSpec<Rows, Cols, T> {
+		using _MatrixInternal::MatrixSpec<Rows, Cols, T>::MatrixSpec;
 
 		Matrix<Cols, Rows, T> trans() const {
 			Matrix<Cols, Rows, T> resMat;

@@ -95,10 +95,10 @@ namespace bm {
 
 		Vector(Vector const& other) : Vector(other.x, other.y, other.z, other.w) {}
 
-		float& x = this->vals[0];
-		float& y = this->vals[1];
-		float& z = this->vals[2];
-		float& w = this->vals[3];
+		T& x = this->vals[0];
+		T& y = this->vals[1];
+		T& z = this->vals[2];
+		T& w = this->vals[3];
 	};
 
 	template <typename T>
@@ -116,9 +116,9 @@ namespace bm {
 			});
 		}
 
-		float& x = this->vals[0];
-		float& y = this->vals[1];
-		float& z = this->vals[2];
+		T& x = this->vals[0];
+		T& y = this->vals[1];
+		T& z = this->vals[2];
 	};
 
 	template <typename T>
@@ -128,8 +128,8 @@ namespace bm {
 
 		Vector(Vector const& other) : Vector(other.x, other.y) {} 
 
-		float& x = this->vals[0];
-		float& y = this->vals[1];
+		T& x = this->vals[0];
+		T& y = this->vals[1];
 	};
 
 	template <int Len, typename T>

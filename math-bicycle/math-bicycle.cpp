@@ -1,55 +1,19 @@
-﻿#include <iostream>
+﻿#include <string>
 #include "src/Vector.h"
-#include "src/Matrix.h"
+#include "src/utils/Image.h"
 
-using std::cout;
-using std::endl;
-
-template <int Length, typename T>
-std::ostream& operator<<(std::ostream& out, bm::Vector<Length, T> const& vec);
-
-template <int Length, typename T>
-std::ostream& operator<<(std::ostream& out, bm::Row<Length, T> const& vec);
-
-template <int Rows, int Cols, typename T>
-std::ostream& operator<<(std::ostream& out, bm::Matrix<Rows, Cols, T> const& mat);
-
-
-int main()
-{
-
- 	return 0;
+bool imageTest() {
+	std::string const image_file = "test_image_10x10.jpg";
+	bm::Image<10, 10, unsigned char> image_10x10;
+	for (int i = 0; i < 10; i += 2) {
+		for (int j = 1; j < 10; j += 2) {
+			auto& pixel = image_10x10.getPixel(i, j);
+			pixel.x = pixel.y = pixel.z = 255;
+		}
+	}
+	return image_10x10.save(image_file);
 }
 
-template <int Length, typename T>
-std::ostream& operator<<(std::ostream& out, bm::Vector<Length, T> const& vec) {
-	out << '[';
-	for (int i = 0; i < Length - 1; ++i) {
-		out << vec.at(i) << ", ";
-	}
-	out << vec.at(Length - 1) << "]";
-
-	return out;
-}
-
-template <int Length, typename T>
-std::ostream& operator<<(std::ostream& out, bm::Row<Length, T> const& vec) {
-	out << '[';
-	for (int i = 0; i < Length - 1; ++i) {
-		out << vec.at(i) << ", ";
-	}
-	out << vec.at(Length - 1) << "]";
-
-	return out;
-}
-
-template <int Rows, int Cols, typename T>
-std::ostream& operator<<(std::ostream& out, bm::Matrix<Rows, Cols, T> const& mat) {
-	out << '[' << endl;
-	for (int i = 0; i < Rows - 1; i++) {
-		out << "   " << mat.at(i) << ',' << endl;
-	}
-	out << "   " << mat.at(Rows - 1) << endl << "]";
-
-	return out;
+int main() {
+	return imageTest();
 }

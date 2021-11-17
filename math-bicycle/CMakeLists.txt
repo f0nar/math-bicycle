@@ -15,13 +15,16 @@ add_executable (
 	"math-bicycle.cpp"
 	"src/Matrix.h"
 	"src/Vector.h"
+	"third/stb_image_write.h"
+	"src/utils/Image.h"
 )
 
 add_executable(
   "math_bicycle_test"
   "tests/Matrix_test.cc"
   "tests/Vector_test.cc"
-)
+ )
+
 target_link_libraries(
   "math_bicycle_test"
   "gtest_main"

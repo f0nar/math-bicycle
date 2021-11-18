@@ -21,7 +21,7 @@ namespace bm {
 
 		Image (int w, int h) : m_width(w), m_height(h), m_pixels(new Vector<3, T>[w*h]) { }
 
-		Image (std::string const& path, bool *status = nullptr) : m_pixels(nullptr) {
+		Image (std::string const& path) : m_pixels(nullptr) {
 			unsigned char* data = stbi_load(path.c_str(), &m_width, &m_height, nullptr, 3);
 			if (data) {
 				m_pixels = new Vector<3, T>[m_width * m_height];
@@ -35,9 +35,6 @@ namespace bm {
 				}
 				free(data);
 			}
-			if (status) {
-				*status = m_pixels != nullptr;
-			}
 		}
 
 		int getWidth() {
@@ -46,6 +43,10 @@ namespace bm {
 
 		int getHeight() {
 			return m_height;
+		}
+
+		bool isValid() {
+			return m_pixels != nullptr;
 		}
 
 		Vector<3, T> &getPixel(int x, int y) {

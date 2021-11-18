@@ -19,7 +19,7 @@ bool imageReadTest() {
 	std::string const read_image_file = "write_image_test_10x10.jpg";
 	std::string const write_image_file = "read_image_test_10x10.jpg";
 	bm::Image<unsigned char> image_10x10(read_image_file);
-	return image_10x10.save(write_image_file);
+	return image_10x10.isValid() ? image_10x10.save(write_image_file) : false;
 }
 
 int main() {

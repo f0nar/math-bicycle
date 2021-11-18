@@ -1,38 +1,66 @@
 
 #include <string>
 #include <cassert>
+#include <iostream>
+
 #include "../Vector.h"
+
 #define STB_IMAGE_WRITE_STATIC
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "../../third/stb_image_write.h"
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "../../third/stb_image.h"
+
+
 namespace bm {
 
-	template <int Width, int Height, typename T>
+	template <typename T>
 	class Image {
 	public:
 
+		Image (int w, int h) : m_width(w), m_height(h), m_pixels(new Vector<3, T>[w*h]) { }
+
+		Image (std::string const& path, bool *status = nullptr) : m_pixels(nullptr) {
+			unsigned char* data = stbi_load(path.c_str(), &m_width, &m_height, nullptr, 3);
+			if (data) {
+				m_pixels = new Vector<3, T>[m_width * m_height];
+				int const pixels_number = m_width * m_height;
+				for (int i = 0; i < pixels_number; ++i) {
+					int const index_to_read = i * 3;
+					Vector<3, T>& pixel = m_pixels[i];
+					pixel.x = static_cast<unsigned char>(data[index_to_read]);
+					pixel.y = static_cast<unsigned char>(data[index_to_read + 1]);
+					pixel.z = static_cast<unsigned char>(data[index_to_read + 2]);
+				}
+				free(data);
+			}
+			if (status) {
+				*status = m_pixels == nullptr;
+			}
+		}
+
 		int getWidth() {
-			return Width;
+			return m_width;
 		}
 
 		int getHeight() {
-			return Height;
+			return m_height;
 		}
 
 		Vector<3, T> &getPixel(int x, int y) {
-			assert(x >= 0 && x < Width && y >= 0 && y < Height);
-			return m_pixels[y * Width + x];
+			assert(x >= 0 && x < m_width && y >= 0 && y < m_height);
+			return m_pixels[y * m_width + x];
 		}
 
 		Vector<3, T> const &getPixel(int x, int y) const {
-			assert(x >= 0 && x < Width&& y >= 0 && y < Height);
-			return m_pixels[h * Width + x];
+			assert(x >= 0 && x < m_width && y >= 0 && y < m_height);
+			return m_pixels[h * m_width + x];
 		}
 
-		bool save(std::string const &fileName) {
-			int const pixels_number = Width * Height;
-			unsigned char image_array[Width * Height * 3];
+		int save(std::string const &fileName) {
+			int const pixels_number = m_width * m_height;
+			unsigned char *image_array = new unsigned char [m_width * m_height * 3];
 			for (int i = 0; i < pixels_number; ++i) {
 				int const index_to_write = i * 3;
 				Vector<3, T> const& pixel = m_pixels[i];
@@ -40,11 +68,20 @@ namespace bm {
 				image_array[index_to_write + 1] = static_cast<unsigned char>(pixel.y);
 				image_array[index_to_write + 2] = static_cast<unsigned char>(pixel.z);
 			}
-			return stbi_write_jpg(fileName.c_str(), Width, Height, 3, image_array, 95);
+			int const write_res =  stbi_write_jpg(fileName.c_str(), m_width, m_height, 3, image_array, 95);
+			delete[] image_array;
+			return write_res;
+		}
+
+		~Image() {
+			delete[] m_pixels;
 		}
 
 	private:
-		Vector<3, T> m_pixels[Width * Height];
+
+		int m_width;
+		int m_height;
+		Vector<3, T> *m_pixels;
 	};
 
 }

@@ -36,7 +36,7 @@ namespace bm {
 				free(data);
 			}
 			if (status) {
-				*status = m_pixels == nullptr;
+				*status = m_pixels != nullptr;
 			}
 		}
 

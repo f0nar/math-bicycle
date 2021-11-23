@@ -85,7 +85,7 @@ namespace bm {
 				data_initializer.init(m_vals);
 			}
 
-			MatrixBase(T(&data)[Rows * Cols]) {
+			MatrixBase(T const (&data)[Rows * Cols]) {
 				for (int i = 0; i < Rows; ++i) {
 					int const index = i * Cols;
 					for (int j = 0; j < Cols; ++j) {
@@ -134,11 +134,12 @@ namespace bm {
 
 			using MatrixBase<Rows, Cols, T>::MatrixBase;
 
+
 			Matrix<Cols, Rows, T> inv() const {
-				Matrix<Cols, Rows, T> identity, this_copy(*this);
-				for (int i = 0; i < Dim - 1; ++i) {
+				Matrix<Cols, Rows, T> identity, this_copy(m_vals);
+				for (int i = 0; i < Rows - 1; ++i) {
 					if (!this_copy[i][i]) {
-						for (int j = i + 1; j < Dim; ++j) {
+						for (int j = i + 1; j < Rows; ++j) {
 							if (this_copy[j][i]) {
 								this_copy[j].swap(this_copy[i]);
 								identity[j].swap(identity[i]);
@@ -146,7 +147,7 @@ namespace bm {
 							}
 						}
 					}
-					for (int j = i + 1; j < Dim; ++j) {
+					for (int j = i + 1; j < Rows; ++j) {
 						if (this_copy[j][i]) {
 							const T scale = -(this_copy[j][i] / this_copy[i][i]);
 							this_copy[j].addScaled(this_copy[i], scale);
@@ -154,7 +155,7 @@ namespace bm {
 						}
 					}
 				}
-				for (int i = Dim - 1; i > 0; --i) {
+				for (int i = Rows - 1; i > 0; --i) {
 					for (int j = i - 1; j >= 0; --j) {
 						if (this_copy[j][i]) {
 							const T scale = -(this_copy[j][i] / this_copy[i][i]);
@@ -164,7 +165,7 @@ namespace bm {
 						}
 					}
 				}
-				for (int i = 0; i < Dim; ++i) {
+				for (int i = 0; i < Rows; ++i) {
 					const T scale = this_copy[i][i];
 					this_copy[i][i] /= scale;
 					identity[i].scale(scale, false);
@@ -174,13 +175,13 @@ namespace bm {
 			}
 
 			T det() const {
-				Matrix<Rows, Cols, T> this_copy(*this);
+				Matrix<Rows, Cols, T> this_copy(m_vals);
 				bool inverted = false;
-				for (int i = 0; i < Dim - 1; ++i) {
+				for (int i = 0; i < Rows - 1; ++i) {
 					// ask Dmytro if I need to make mat[i][i] != T() comparison
 					if (!this_copy[i][i]) {
 						bool swaped = false;
-						for (int j = i + 1; j < Dim; ++j) {
+						for (int j = i + 1; j < Rows; ++j) {
 							if (this_copy[j][i]) {
 								this_copy[j].swap(this_copy[i]);
 								swaped = true;
@@ -194,14 +195,14 @@ namespace bm {
 							inverted = !inverted;
 						}
 					}
-					for (int j = i + 1; j < Dim; ++j) {
+					for (int j = i + 1; j < Rows; ++j) {
 						if (this_copy[j][i]) {
 							this_copy[j].addScaled(this_copy[i], -(this_copy[j][i] / this_copy[i][i]));
 						}
 					}
 				}
 				T det = this_copy[0][0];
-				for (int i = 1; i < Dim; ++i) {
+				for (int i = 1; i < Rows; ++i) {
 					det *= this_copy[i][i];
 				}
 				// unar minus sign
@@ -214,6 +215,7 @@ namespace bm {
 
 	template <int Rows, int Cols, typename T>
 	struct Matrix : _MatrixInternal::MatrixSpec<Rows, Cols, T> {
+
 		using _MatrixInternal::MatrixSpec<Rows, Cols, T>::MatrixSpec;
 
 		Matrix<Cols, Rows, T> trans() const {

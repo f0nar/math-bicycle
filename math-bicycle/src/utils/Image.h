@@ -1,6 +1,9 @@
+#ifndef _BICYCLE_IMAGE_H_
+#define _BICYCLE_IMAGE_H_
 
 #include <string>
 #include <cassert>
+#include <algorithm>
 #include <iostream>
 
 #include "../Vector.h"
@@ -59,6 +62,47 @@ namespace bm {
 			return m_pixels[h * m_width + x];
 		}
 
+		Vector<3, T>& drawPixel(int x, int y, T r, T g, T b) {
+			auto &pixel = getPixel(x, y);
+			pixel.x = r;
+			pixel.y = g;
+			pixel.z = b;
+			return pixel;
+		}
+
+		void drawLine(int x0, int xn, int y0, int yn, T r, T g, T b) {
+			int dx = abs(xn - x0);
+			int dy = abs(yn - y0);
+			int err = 0;
+			if (dy <= dx) {
+				int yDir = yn >= y0 ? 1 : -1;
+				int dErr = dy + 1;
+				int y = y0;
+				if (xn < x0) std::swap(x0, xn);
+				for (int x = x0; x <= xn; ++x) {
+					drawPixel(x, y, r, g, b);
+					err += dErr;
+					if (err >= dx + 1) {
+						y += yDir;
+						err -= dx + 1;
+					}
+				}
+			} else {
+				int xDir = xn >= x0 ? 1 : -1;
+				int dErr = dx + 1;
+				int x = x0;
+				if (yn < y0) std::swap(y0, yn);
+				for (int y = y0; y < yn; ++y) {
+					drawPixel(x, y, r, g, b);
+					err += dErr;
+					if (err >= dy + 1) {
+						x += xDir;
+						err -= dy + 1;
+					}
+				}
+			}
+		}
+
 		int save(std::string const &fileName) {
 			int const pixels_number = m_width * m_height;
 			unsigned char *image_array = new unsigned char [m_width * m_height * 3];
@@ -86,3 +130,5 @@ namespace bm {
 	};
 
 }
+
+#endif // !_BICYCLE_IMAGE_H_

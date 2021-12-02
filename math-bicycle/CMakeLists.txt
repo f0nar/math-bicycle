@@ -17,7 +17,9 @@ add_executable (
 	"math-bicycle.cpp"
 	"src/Matrix.h"
 	"src/Vector.h"
+	"src/PolynomicFunction.h"
 	"src/utils/Image.h"
+	"src/utils/XYPlot.h"
 	"third/stb_image_write.h"
 	"third/stb_image.h"
 )

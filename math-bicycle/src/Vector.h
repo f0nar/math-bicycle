@@ -83,9 +83,19 @@ namespace bm {
 		};
 	};
 
+	#define VECTOR_ASSIGN_OPERATOR(Len) \
+	Vector & operator=(Vector const& another) { \
+		for (int i = 0; i < Len; ++i) { vals[i] = T(another.vals[i]); } \
+		return *this; \
+	}
+
 	template <int Len = 3, typename T = float>
 	struct Vector : _VectorInternal::VectorBase<Len, T> {
+
 		using _VectorInternal::VectorBase<Len, T>::VectorBase;
+
+		VECTOR_ASSIGN_OPERATOR(Len);
+
 	};
 
 	template <typename T>
@@ -95,10 +105,13 @@ namespace bm {
 
 		Vector(Vector const& other) : Vector(other.x, other.y, other.z, other.w) {}
 
+		VECTOR_ASSIGN_OPERATOR(4);
+
 		T& x = this->vals[0];
 		T& y = this->vals[1];
 		T& z = this->vals[2];
 		T& w = this->vals[3];
+
 	};
 
 	template <typename T>
@@ -107,6 +120,8 @@ namespace bm {
 		using _VectorInternal::VectorBase<3, T>::VectorBase;
 
 		Vector(Vector const& other) : Vector(other.x, other.y, other.z) {}
+
+		VECTOR_ASSIGN_OPERATOR(3);
 
 		Vector cross(Vector const& other) const {
 			return Vector({
@@ -119,6 +134,7 @@ namespace bm {
 		T& x = this->vals[0];
 		T& y = this->vals[1];
 		T& z = this->vals[2];
+
 	};
 
 	template <typename T>
@@ -126,10 +142,13 @@ namespace bm {
 
 		using _VectorInternal::VectorBase<2, T>::VectorBase;
 
-		Vector(Vector const& other) : Vector(other.x, other.y) {} 
+		Vector(Vector const& other) : Vector(other.x, other.y) {}
+
+		VECTOR_ASSIGN_OPERATOR(2);
 
 		T& x = this->vals[0];
 		T& y = this->vals[1];
+
 	};
 
 	template <int Len, typename T>

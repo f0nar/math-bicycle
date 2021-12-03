@@ -14,7 +14,7 @@ namespace bm {
 		using Image<uchar>::Image;
 
 		template <typename Func, typename ArgT, typename ResT = ArgT>
-		void plot(Func func, ArgT x0, ArgT xn, int values, uchar r = 0, uchar g = 0, uchar b = 0) {
+		void plot(Func func, ArgT x0, ArgT xn, int values, ColorRGB<uchar> const& color) {
 			std::unique_ptr<ResT[]> results(new ResT[values]);
 
 			ResT minRes = results[0] = func(x0);
@@ -36,7 +36,7 @@ namespace bm {
 				int y0 = getHeight() - 1 - std::round((results[i] - minRes) * yScale);
 				int xn = std::round((i + 1) * xScale);
 				int yn = getHeight() - 1 - std::round((results[(i + 1)] - minRes) * yScale);
-				drawLine(x0, xn, y0, yn, r, g, b);
+				drawLine(x0, xn, y0, yn, color);
 			}
 		}
 

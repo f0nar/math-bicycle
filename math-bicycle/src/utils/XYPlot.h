@@ -7,13 +7,14 @@
 
 namespace bm {
 
-	template <typename T>
-	struct XYPlot : public Image<T> {
+	using uchar = unsigned char;
 
-		using Image<T>::Image;
+	struct XYPlot : public Image<uchar> {
+
+		using Image<uchar>::Image;
 
 		template <typename Func, typename ArgT, typename ResT = ArgT>
-		void plot(Func func, ArgT x0, ArgT xn, int values = 100) {
+		void plot(Func func, ArgT x0, ArgT xn, int values, uchar r = 0, uchar g = 0, uchar b = 0) {
 			std::unique_ptr<ResT[]> results(new ResT[values]);
 
 			ResT minRes = results[0] = func(x0);
@@ -26,16 +27,16 @@ namespace bm {
 				else if (maxRes < results[i]) maxRes = results[i];
 			}
 
-			ResT const ampl = maxRes - minRes;
+			auto const ampl = maxRes - minRes;
 			float const xScale = getWidth() / values;
 			float const yScale = (getHeight() - 1) / ampl;
 
 			for (int i = 0; i < values - 1; ++i) {
 				int x0 = std::round(i * xScale);
-				int y0 = std::round((results[i] - minRes) * yScale);
+				int y0 = getHeight() - 1 - std::round((results[i] - minRes) * yScale);
 				int xn = std::round((i + 1) * xScale);
-				int yn = std::round((results[(i + 1)] - minRes) * yScale);
-				drawLine(x0, xn, y0, yn, 255, 255, 255);
+				int yn = getHeight() - 1 - std::round((results[(i + 1)] - minRes) * yScale);
+				drawLine(x0, xn, y0, yn, r, g, b);
 			}
 		}
 

@@ -22,7 +22,11 @@ namespace bm {
 	class Image {
 	public:
 
-		Image (int w, int h) : m_width(w), m_height(h), m_pixels(new Vector<3, T>[w*h]) { }
+		Image(int w, int h) : m_width(w), m_height(h), m_pixels(new Vector<3, T>[w * h]) {}
+
+		Image (int w, int h, T r, T g, T b) : Image(w, h) {
+			if (isValid()) fill(r, g, b);
+		}
 
 		Image (std::string const& path) : m_pixels(nullptr) {
 			unsigned char* data = stbi_load(path.c_str(), &m_width, &m_height, nullptr, 3);
@@ -62,12 +66,11 @@ namespace bm {
 			return m_pixels[h * m_width + x];
 		}
 
-		Vector<3, T>& drawPixel(int x, int y, T r, T g, T b) {
+		void drawPixel(int x, int y, T r, T g, T b) {
 			auto &pixel = getPixel(x, y);
 			pixel.x = r;
 			pixel.y = g;
 			pixel.z = b;
-			return pixel;
 		}
 
 		void drawLine(int x0, int xn, int y0, int yn, T r, T g, T b) {
@@ -99,6 +102,45 @@ namespace bm {
 						x += xDir;
 						err -= dy + 1;
 					}
+				}
+			}
+		}
+
+		void drawGrid(int x0, int xStep, int xWidth, int y0, int yStep, int yWidth, T r, T g, T b) {
+			for (int x = x0; x < m_width; x += xStep + xWidth) {
+				for (int y = 0; y < m_height; ++y) {
+					for (
+						int x0 = x, xn = std::min(x + xWidth, m_width);
+						x0 < xn;
+						++x0)
+					{
+						auto& pixel = m_pixels[y * m_width + x0];
+						pixel[0] = r;
+						pixel[1] = g;
+						pixel[2] = b;
+					}
+				}
+			}
+			for (int y = y0; y < m_height; y += yStep + yWidth) {
+				for (int x = 0; x < m_width; ++x) {
+					for (
+						int y0 = y, yn = std::min(y + yWidth, m_height); y0 < yn; ++y0) {
+						auto& pixel = m_pixels[y0 * m_width + x];
+						pixel[0] = r;
+						pixel[1] = g;
+						pixel[2] = b;
+					}
+				}
+			}
+		}
+
+		void fill(T r, T g, T b) {
+			for (int i = 0; i < m_width; ++i) {
+				for (int j = 0; j < m_height; ++j) {
+					auto& pixel = m_pixels[j * m_width + i];
+					pixel[0] = r;
+					pixel[1] = g;
+					pixel[2] = b;
 				}
 			}
 		}

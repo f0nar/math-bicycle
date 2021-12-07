@@ -11,34 +11,99 @@ namespace bm {
 
 	struct XYPlot : public Image<uchar> {
 
-		using Image<uchar>::Image;
+		XYPlot(int w, int h)
+			: Image<uchar>::Image(w, h, ColorRGB(255, 255, 255)), m_xEnd(w), m_yEnd(h)
+		{ }
 
-		template <typename Func, typename ArgT, typename ResT = ArgT>
-		void plot(Func func, ArgT x0, ArgT xn, int values, ColorRGB<uchar> const& color) {
-			std::unique_ptr<ResT[]> results(new ResT[values]);
+		XYPlot(int w, int h, ColorRGB const& color)
+			: Image<uchar>::Image(w, h, color), m_xEnd(w), m_yEnd(h)
+		{ }
 
-			ResT minRes = results[0] = func(x0);
-			ResT maxRes = minRes;
-			ArgT const step = (xn - x0) / (values - 1);
+		XYPlot(std::string const& path) : Image<uchar>::Image(path) {
+			m_xEnd = m_width;
+			m_yEnd = m_height;
+		}
+
+		template <typename Func>
+		void plot(Func func, float x0, float xn, ColorRGB const& color) {
+			int values = std::round(std::sqrt(m_height * m_height + m_width * m_width) / 10);
+			std::unique_ptr<float[]> results(new float[values]);
+
+			float minRes = results[0] = func(x0);
+			float maxRes = minRes;
+			float const step = (xn - x0) / (values - 1);
 
 			for (int i = 1; i < values; ++i) {
-				ResT resI = results[i] = func(x0 + i * step);
-				if (results[i] < minRes) minRes = results[i];
-				else if (maxRes < results[i]) maxRes = results[i];
+				float resI = results[i] = func(x0 + i * step);
+				if (resI < minRes) minRes = resI;
+				else if (maxRes < resI) maxRes = resI;
 			}
 
 			auto const ampl = maxRes - minRes;
-			float const xScale = getWidth() / values;
-			float const yScale = (getHeight() - 1) / ampl;
+			float const xScale = (m_width - 1.0f) / (values - 1.0f);
+			float const yScale = (m_height - 1.0f) / ampl;
 
 			for (int i = 0; i < values - 1; ++i) {
 				int x0 = std::round(i * xScale);
-				int y0 = getHeight() - 1 - std::round((results[i] - minRes) * yScale);
 				int xn = std::round((i + 1) * xScale);
-				int yn = getHeight() - 1 - std::round((results[(i + 1)] - minRes) * yScale);
+				int y0 = m_height - 1 - std::round((results[i] - minRes) * yScale);
+				int yn = m_height - 1 - std::round((results[(i + 1)] - minRes) * yScale);
 				drawLine(x0, xn, y0, yn, color);
 			}
+
+			m_xStart = x0;
+			m_xEnd = xn;
+			m_yStart = minRes;
+			m_yEnd = maxRes;
+			m_xScale = (m_width - 1.0f) / (xn - x0);
+			m_yScale = (m_height - 1.0f) / ampl;
 		}
+
+		void drawTarget(float x, float y, ColorRGB const& color) {
+			if (x >= m_xStart && x <= m_xEnd && y >= m_yStart && y <= m_yEnd) {
+				int const xCenter = std::round((x - m_xStart) * m_xScale);
+				int const yCenter = m_height - 1 - std::round((y - m_yStart) * m_yScale);
+				int const len = 5;
+				int const lenDiv2 = len / 2;
+				drawHorizontalLine(xCenter - lenDiv2, yCenter, len, color);
+				drawVerticalLine(xCenter, yCenter - lenDiv2, len, color);
+				drawLine(xCenter - lenDiv2, xCenter + lenDiv2, yCenter - lenDiv2, yCenter + lenDiv2, color);
+				drawLine(xCenter - lenDiv2, xCenter + lenDiv2, yCenter + lenDiv2, yCenter - lenDiv2, color);
+			}
+		}
+
+		float getXStart() const {
+			return m_xStart;
+		}
+
+		float getYStart() const {
+			return m_yStart;
+		}
+
+		float getXEnd() const {
+			return m_xEnd;
+		}
+
+		float getYEnd() const {
+			return m_yEnd;
+		}
+
+		float getXScale() const {
+			return m_xScale;
+		}
+
+		float getYScale()  const {
+			return m_yScale;
+		}
+
+	private:
+
+		float m_xStart = 0.0f;
+		float m_xEnd = 0.0f;
+		float m_yStart = 0.0f;
+		float m_yEnd = 0.0f;
+		float m_xScale = 1.0f;
+		float m_yScale = 1.0f;
 
 	};
 

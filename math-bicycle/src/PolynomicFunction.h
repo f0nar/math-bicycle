@@ -16,10 +16,8 @@ namespace bm {
 		}
 
 		T operator()(T const& arg) const {
-			T res = m_coefficients[N - 1];
-			for (int i = 0; i < N - 1; ++i) {
-				res += m_coefficients[i] * std::pow<T, int>(arg, N - i - 1);
-			}
+			T res = m_coefficients[0];
+			for (int i = 1; i < N; ++i) { res = std::fma(res, arg, m_coefficients[i]); }
 			return res;
 		}
 

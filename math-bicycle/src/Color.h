@@ -6,7 +6,10 @@
 namespace bm {
 
 	template <typename T = unsigned char>
-	using ColorRGB = Vector<3, T>;
+	using ColorRGB_ = Vector<3, T>;
+
+	using ColorRGB = ColorRGB_<unsigned char>;
+
 
 };
 

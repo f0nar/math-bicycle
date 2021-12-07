@@ -22,20 +22,20 @@ namespace bm {
 	class Image {
 	public:
 
-		Image(int w, int h) : m_width(w), m_height(h), m_pixels(new ColorRGB<T>[w * h]) {}
+		Image(int w, int h) : m_width(w), m_height(h), m_pixels(new ColorRGB_<T>[w * h]) {}
 
-		Image (int w, int h, ColorRGB<T> const& color) : Image(w, h) {
+		Image (int w, int h, ColorRGB_<T> const& color) : Image(w, h) {
 			if (isValid()) fill(color);
 		}
 
 		Image (std::string const& path) : m_pixels(nullptr) {
 			unsigned char* data = stbi_load(path.c_str(), &m_width, &m_height, nullptr, 3);
 			if (data) {
-				m_pixels = new ColorRGB<T>[m_width * m_height];
+				m_pixels = new ColorRGB_<T>[m_width * m_height];
 				int const pixels_number = m_width * m_height;
 				for (int i = 0; i < pixels_number; ++i) {
 					int const index_to_read = i * 3;
-					ColorRGB<T>& pixel = m_pixels[i];
+					ColorRGB_<T>& pixel = m_pixels[i];
 					pixel.x = static_cast<unsigned char>(data[index_to_read]);
 					pixel.y = static_cast<unsigned char>(data[index_to_read + 1]);
 					pixel.z = static_cast<unsigned char>(data[index_to_read + 2]);
@@ -56,54 +56,54 @@ namespace bm {
 			return m_pixels != nullptr;
 		}
 
-		ColorRGB<T> &getPixel(int x, int y) {
+		ColorRGB_<T> &getPixel(int x, int y) {
 			assert(x >= 0 && x < m_width && y >= 0 && y < m_height);
 			return m_pixels[y * m_width + x];
 		}
 
-		ColorRGB<T> const &getPixel(int x, int y) const {
+		ColorRGB_<T> const &getPixel(int x, int y) const {
 			assert(x >= 0 && x < m_width && y >= 0 && y < m_height);
 			return m_pixels[h * m_width + x];
 		}
 
-		void drawPixel(int x, int y, ColorRGB<T> const& color) {
+		void drawPixel(int x, int y, ColorRGB_<T> const& color) {
 			getPixel(x, y) = color;
 		}
 
-		void drawLine(int x0, int xn, int y0, int yn, ColorRGB<T> const& color) {
-			int dx = abs(xn - x0);
-			int dy = abs(yn - y0);
-			int err = 0;
-			if (dy <= dx) {
-				int yDir = yn >= y0 ? 1 : -1;
-				int dErr = dy + 1;
-				int y = y0;
-				if (xn < x0) std::swap(x0, xn);
-				for (int x = x0; x <= xn; ++x) {
-					drawPixel(x, y, color);
-					err += dErr;
-					if (err >= dx + 1) {
-						y += yDir;
-						err -= dx + 1;
-					}
+		void drawLine(int x0, int xn, int y0, int yn, ColorRGB_<T> const& color) {
+			const int deltaX = abs(xn - x0);
+			const int deltaY = abs(yn - y0);
+			const int signX = x0 < xn ? 1 : -1;
+			const int signY = y0 < yn ? 1 : -1;
+			int error = deltaX - deltaY;
+			drawPixel(xn, yn, color);
+			while (x0 != xn || y0 != yn)
+			{
+				drawPixel(x0, y0, color);
+				int error2 = error * 2;
+				if (error2 > -deltaY)
+				{
+					error -= deltaY;
+					x0 += signX;
 				}
-			} else {
-				int xDir = xn >= x0 ? 1 : -1;
-				int dErr = dx + 1;
-				int x = x0;
-				if (yn < y0) std::swap(y0, yn);
-				for (int y = y0; y < yn; ++y) {
-					drawPixel(x, y, color);
-					err += dErr;
-					if (err >= dy + 1) {
-						x += xDir;
-						err -= dy + 1;
-					}
+				if (error2 < deltaX)
+				{
+					error += deltaX;
+					y0 += signY;
 				}
 			}
+
 		}
 
-		void drawHorizontalGrid(int y0, int yStep, int yWidth, ColorRGB<T> const& color) {
+		void drawHorizontalLine(int x0, int y0, int len, ColorRGB_<T> const& color) {
+			for (int i = 0; i < len; ++i) { drawPixel(x0 + i, y0, color); }
+		}
+
+		void drawVerticalLine(int x0, int y0, int len, ColorRGB_<T> const& color) {
+			for (int i = 0; i < len; ++i) { drawPixel(x0, y0 + i, color); }
+		}
+
+		void drawHorizontalGrid(int y0, int yStep, int yWidth, ColorRGB_<T> const& color) {
 			for (int y = y0; y < m_height; y += yStep + yWidth) {
 				for (int x = 0; x < m_width; ++x) {
 					for (
@@ -114,7 +114,7 @@ namespace bm {
 			}
 		}
 
-		void drawVerticalGrid(int x0, int xStep, int xWidth, ColorRGB<T> const& color) {
+		void drawVerticalGrid(int x0, int xStep, int xWidth, ColorRGB_<T> const& color) {
 			for (int x = x0; x < m_width; x += xStep + xWidth) {
 				for (int y = 0; y < m_height; ++y) {
 					for (
@@ -129,17 +129,17 @@ namespace bm {
 		}
 
 
-		void drawGrid(int start, int step, int width, ColorRGB<T> const& color) {
+		void drawGrid(int start, int step, int width, ColorRGB_<T> const& color) {
 			drawVerticalGrid(start, step, width, color);
 			drawHorizontalGrid(start, step, width, color);
 		}
 
-		void drawGrid(int x0, int xStep, int xWidth, ColorRGB<T> const& vColor, int y0, int yStep, int yWidth, ColorRGB<T> const& hColor) {
+		void drawGrid(int x0, int xStep, int xWidth, ColorRGB_<T> const& vColor, int y0, int yStep, int yWidth, ColorRGB_<T> const& hColor) {
 			drawVerticalGrid(x0, xStep, xWidth, vColor);
 			drawHorizontalGrid(y0, yStep, yWidth, hColor);
 		}
 
-		void fill(ColorRGB<T> const &color) {
+		void fill(ColorRGB_<T> const &color) {
 			for (int i = 0; i < m_width; ++i) {
 				for (int j = 0; j < m_height; ++j) {
 					m_pixels[j * m_width + i] = color;
@@ -152,7 +152,7 @@ namespace bm {
 			unsigned char *image_array = new unsigned char [m_width * m_height * 3];
 			for (int i = 0; i < pixels_number; ++i) {
 				int const index_to_write = i * 3;
-				ColorRGB<T> const& pixel = m_pixels[i];
+				ColorRGB_<T> const& pixel = m_pixels[i];
 				image_array[index_to_write]     = static_cast<unsigned char>(pixel.x);
 				image_array[index_to_write + 1] = static_cast<unsigned char>(pixel.y);
 				image_array[index_to_write + 2] = static_cast<unsigned char>(pixel.z);
@@ -166,11 +166,12 @@ namespace bm {
 			delete[] m_pixels;
 		}
 
-	private:
+	protected:
 
 		int m_width;
 		int m_height;
-		ColorRGB<T> *m_pixels;
+		ColorRGB_<T> *m_pixels;
+
 	};
 
 }

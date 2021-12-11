@@ -4,7 +4,7 @@
 #include <string>
 #include <cassert>
 #include <algorithm>
-#include <iostream>
+#include <cmath>
 
 #include "../Color.h"
 
@@ -119,15 +119,13 @@ namespace bm {
 				for (int y = 0; y < m_height; ++y) {
 					for (
 						int x0 = x, xn = std::min(x + xWidth, m_width);
-						x0 < xn;
-						++x0)
+						x0 < xn; ++x0)
 					{
 						m_pixels[y * m_width + x0] = color;
 					}
 				}
 			}
 		}
-
 
 		void drawGrid(int start, int step, int width, ColorRGB_<T> const& color) {
 			drawVerticalGrid(start, step, width, color);
@@ -162,9 +160,7 @@ namespace bm {
 			return write_res;
 		}
 
-		~Image() {
-			delete[] m_pixels;
-		}
+		~Image() { delete[] m_pixels; }
 
 	protected:
 

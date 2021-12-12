@@ -10,22 +10,21 @@ int main() {
 	float const xStart = -2.5;
 	float const xEnd = 2.5;
 	int const targetsNumber = 5;
-	float coefficients[] = { 3.0f, 0.0f, -25.0f, 0.0f, 60.0f, 1.0f };
-	float coefficients2[] = { 7.0f, -2.0f, -5.0f, 15.0f, 60.0f};
+	float const step = (xEnd - xStart) / (targetsNumber + 1);
+	float const halfStep = step / 2;
+	auto X = getXfunc();
 
-	PolynomicFunction polFunc(coefficients);
+	auto polFunc1 = 3.0f * X * X * X * X * X - 25.0f * X * X * X + 60.0f * X + 1.0f;
+	auto polFunc2 = 7.0f * X * X * X * X - 2.0f * X * X * X + -5.0f * X * X + 15.0f;
 	XYPlot plot(width, height, ColorRGB(255, 255, 255));
 	plot.setRange(xStart, xEnd);
 	plot.addGrid(25, 25, 1, ColorRGB(200, 200, 200));
-	plot.addCurve(polFunc, ColorRGB(128, 55, 0));
-	plot.addCurve(PolynomicFunction(coefficients2), ColorRGB(0, 55, 128));
+	plot.addCurve(polFunc1, ColorRGB(128, 55, 0));
+	plot.addCurve(polFunc2, ColorRGB(0, 55, 128));
 
-	float const step = (xEnd - xStart) / (targetsNumber + 1);
-	float const halfStep = step / 2;
 	for (int i = 0; i < targetsNumber; ++i) {
 		float const x = xStart + halfStep + step * i;
-		float const y = polFunc(x);
-		plot.addTarget(x, y, ColorRGB(100, 100, 0));
+		plot.addTarget(x, polFunc1(x), ColorRGB(100, 100, 0));
 	}
 
 	plot.update();

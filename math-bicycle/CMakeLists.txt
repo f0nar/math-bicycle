@@ -29,6 +29,7 @@ add_executable(
   "math_bicycle_test"
   "tests/Matrix_test.cc"
   "tests/Vector_test.cc"
+  "tests/PolynomicFunction_test.cc"
 )
 
 target_link_libraries(

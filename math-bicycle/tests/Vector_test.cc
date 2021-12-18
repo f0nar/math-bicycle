@@ -1,6 +1,5 @@
 #include <gtest/gtest.h>
 #include "../src/Vector.h"
-#include <iostream>
 
 using namespace bm;
 

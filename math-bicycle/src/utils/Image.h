@@ -7,6 +7,7 @@
 #include <cmath>
 
 #include "../Color.h"
+#include "./Fonts.h"
 
 #define STB_IMAGE_WRITE_STATIC
 #define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -135,6 +136,38 @@ namespace bm {
 		void drawGrid(int x0, int xStep, int xWidth, ColorRGB_<T> const& vColor, int y0, int yStep, int yWidth, ColorRGB_<T> const& hColor) {
 			drawVerticalGrid(x0, xStep, xWidth, vColor);
 			drawHorizontalGrid(y0, yStep, yWidth, hColor);
+		}
+
+		void drawKey(int x, int y, char key, ColorRGB_<T> const& color) {
+			int set;
+			char* bitmap = font8x8_basic[key];
+			for (int i = 0; i < 8; i++) {
+				for (int j = 0; j < 8; j++) {
+					set = bitmap[j] & 1 << i;
+					if (set) { drawPixel(x + i, y + j, color); }
+				}
+			}
+		}
+
+		void drawRectangle(int x0, int y0, int width, int height, ColorRGB_<T> const& borderColor, ColorRGB_<T> const& fillColor) {
+			drawVerticalLine(x0, y0, height, borderColor);
+			drawVerticalLine(x0 + width - 1, y0, height, borderColor);
+			drawHorizontalLine(x0 + 1, y0, width - 2, borderColor);
+			drawHorizontalLine(x0 + 1, y0 + height - 1, width - 2, borderColor);
+			drawRectangle(x0 + 1, y0 + 1, width - 2, height - 2, fillColor);
+		}
+
+		void drawRectangle(int x0, int y0, int width, int height, ColorRGB_<T> const& fillColor) {
+			for (int xi = x0, xn = x0 + width; xi < xn; ++xi) {
+				drawVerticalLine(xi, y0, height, fillColor);
+			}
+		}
+		
+		void drawString(int x, int y, std::string const& str, ColorRGB_<T> const& color) {
+			for (int i = 0; i < str.size(); ++i) {
+				drawKey(x, y, str[i], color);
+				x += 8;
+			}
 		}
 
 		void fill(ColorRGB_<T> const &color) {

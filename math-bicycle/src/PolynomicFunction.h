@@ -2,6 +2,7 @@
 #define _BICYCLE_POLYNOMIC_FUNCTION_H_
 
 #include <cmath>
+#include <string>
 #include <initializer_list>
 
 namespace bm {
@@ -10,8 +11,15 @@ namespace bm {
 
 	#define POL_FUNC_POW(N1, N2) (N1 + N2)
 
+
+	template <typename T>
+	struct Function {
+		virtual std::string toString() const = 0;
+		virtual T operator()(T const& arg) const = 0;
+	};
+
 	template <int N, typename T>
-	struct PolynomicFunction {
+	struct PolynomicFunction : Function<T> {
 
 		template <int N2, typename T2>
 		friend struct PolynomicFunction;
@@ -19,9 +27,6 @@ namespace bm {
 		PolynomicFunction(T const (&coefficients)[N + 1]) {
 			for (int i = 0; i <= N; ++i) { m_coefficients[i] = T(coefficients[i]); }
 		}
-
-		template <typename ...ArgTs>
-		PolynomicFunction(ArgTs ...args) : m_coefficients{ T(args)... } { }
 
 		T operator()(T const& arg) const {
 			T res = m_coefficients[0];
@@ -104,6 +109,33 @@ namespace bm {
 			return operator+(-sub);
 		}
 
+		std::string toString() const {
+			auto to_string_without_trailing_zeros = [](float num) {
+				std::string num_str = std::to_string(num);
+				auto last_not_triling_zero_pos = num_str.find_last_not_of('0');
+				auto erase_start =
+					last_not_triling_zero_pos < num_str.length() && num_str.at(last_not_triling_zero_pos) == '.' ?
+					last_not_triling_zero_pos : last_not_triling_zero_pos + 1;
+				num_str.erase(erase_start, std::string::npos);
+				return num_str;
+			};
+			auto continue_polynom_string = [&to_string_without_trailing_zeros](std::string& src, T const& coef, int pow) {
+				if (!coef) return;
+				if (coef > 0) src += '+';
+				src += to_string_without_trailing_zeros(coef);
+				if (pow > 0) {
+					src += "*X";
+					if (pow > 1) src += "^" + to_string_without_trailing_zeros(pow);
+				}
+			};
+
+			std::string resStr;
+			for (int i = 0, in = N + 1; i < in; ++i) {
+				continue_polynom_string(resStr, m_coefficients[i], N - i);
+			}
+			return resStr;
+		}
+
 	private:
 
 		T m_coefficients[N + 1];
@@ -122,7 +154,7 @@ namespace bm {
 
 	template <typename T>
 	struct One_ : PolynomicFunction<0, T> {
-		One_() : PolynomicFunction<0, T>::PolynomicFunction(T(1)) { }
+		One_() : PolynomicFunction<0, T>::PolynomicFunction({ 1 }) { }
 	};
 
 	using Xf = X_<float>;

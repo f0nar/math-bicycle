@@ -1,9 +1,13 @@
 #ifndef _BICYCLE_POLYNOMIC_FUNCTION_H_
 #define _BICYCLE_POLYNOMIC_FUNCTION_H_
 
+#include <array>
 #include <cmath>
 #include <string>
 #include <initializer_list>
+
+#include "Matrix.h"
+#include "Vector.h"
 
 namespace bm {
 
@@ -162,6 +166,29 @@ namespace bm {
 
 	using Onef = One_<float>;
 	using Oned = One_<double>;
+
+	template <int N, typename ElT = float>
+	PolynomicFunction<N, ElT> fitPoly(std::array<Vector<2, ElT>, N> const& points) {
+		int constexpr IncN = N + 1;
+		Matrix<IncN, IncN, ElT> coef_mat;
+		Vector<IncN, ElT> res_vec;
+		for (int i = 0; i < N; ++i) {
+			auto const& pointI = points[i];
+			for (int j = 0; j < IncN; ++j) {
+				auto const x = pointI.x;
+				coef_mat[i][j] = std::pow(x, N - j);
+			}
+			res_vec[i] = pointI.y;
+		}
+		for (int i = 0; i < N; ++i) { coef_mat[N][i] = 0; }
+		coef_mat[N][N] = res_vec[N] = 1;
+
+		auto pol_coefficients = coef_mat.inv() * res_vec;
+		ElT pol_coefficients_arr[IncN];
+		for (int i = 0; i < IncN; ++i) { pol_coefficients_arr[i] = pol_coefficients[i]; }
+
+		return PolynomicFunction<N, ElT>(pol_coefficients_arr);
+	}
 
 }
 

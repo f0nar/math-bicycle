@@ -11,7 +11,7 @@ int main() {
 	int const height = 512;
 	float const xStart = -2.5;
 	float const xEnd = 2.5;
-	int const targetsNumber = 5;
+	int const targetsNumber = 6;
 	float const step = (xEnd - xStart) / (targetsNumber + 1);
 	float const halfStep = step / 2;
 	Xf X;

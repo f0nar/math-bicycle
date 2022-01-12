@@ -44,7 +44,7 @@ namespace bm {
 
 		void swap(bm::Row<Len, T>& other) {
 			for (int i = 0; i < Len; ++i) {
-				T& temp = m_row_data[i];
+				T temp = m_row_data[i];
 				m_row_data[i] = other[i];
 				other[i] = temp;
 			}

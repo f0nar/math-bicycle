@@ -75,28 +75,31 @@ namespace bm {
 				}
 			}
 
-			auto const ampl = maxRes - minRes;
-			float const xScale = (m_width - 1.0f) / (values - 1.0f);
-			float const yScale = (m_height - 1.0f) / ampl;
-
 			m_yStart = minRes;
 			m_yEnd = maxRes;
 			m_xScale = (m_width - 1.0f) / (m_xEnd - m_xStart);
-			m_yScale = yScale;
+			m_yScale = (m_height - 1.0f) / (m_yEnd - m_yStart);
+			{
+				Matrix3f imageToWorld({
+					1.0f / m_xScale,  0,		       m_xStart,
+					0,		         -1.0f / m_yScale, m_yEnd,
+					0,		          0,		       1
+				});
+				m_worldToImage = imageToWorld.inv();
+			}
 
 			drawGrids();
 			drawAxises();
 
 			{
 				int i = 0;
+				float xStep = (m_xEnd - m_xStart) / (values - 1);
 				for (auto const& [name, curveData] : m_curvesMap) {
 					auto& resultsPtr = results[i];
 					for (int j = 0; j < values - 1; ++j) {
-						int x0 = std::round(j * xScale);
-						int xn = std::round((j + 1) * xScale);
-						int y0 = m_height - 1 - std::round((resultsPtr[j] - minRes) * yScale);
-						int yn = m_height - 1 - std::round((resultsPtr[(j + 1)] - minRes) * yScale);
-						drawLine(x0, xn, y0, yn, curveData.color);
+						Vector3f fromWorld(j * xStep, resultsPtr[j], 1);
+						Vector3f toWorld((j + 1) * xStep, resultsPtr[(j + 1)], 1);
+						drawLine(toImage(fromWorld), toImage(toWorld), curveData.color);
 					}
 					++i;
 				}
@@ -137,26 +140,19 @@ namespace bm {
 		}
 
 		void drawGrids() {
+			auto imageZeroPoint = getImageZeroPoint();
 			for (const auto& grid : m_grids) {
 				if (grid.type != GridType::Vertical) {
 					int const stepInPixels =  std::round(grid.step * m_yScale);
-					int const startInPixels = getHorizontalZeroIndex() % stepInPixels;
+					int const startInPixels = imageZeroPoint.x % stepInPixels;
 					drawHorizontalGrid(startInPixels, stepInPixels - 1, 1, grid.color);
 				}
 				if (grid.type != GridType::Horizontal) {
 					int const stepInPixels = std::round(grid.step * m_xScale);
-					int const startInPixels = getVertivalZeroIndex() % stepInPixels;
+					int const startInPixels = imageZeroPoint.y % stepInPixels;
 					drawVerticalGrid(startInPixels, stepInPixels - 1, 1, grid.color);
 				}
 			}
-		}
-
-		int getVertivalZeroIndex() {
-			return static_cast<int>(std::round(-m_xStart * m_xScale));
-		}
-
-		int getHorizontalZeroIndex() {
-			return m_height + static_cast<int>(std::round(m_yStart * m_yScale)) - 1;
 		}
 
 		void drawCurveNames() {
@@ -192,26 +188,43 @@ namespace bm {
 		}
 
 		void drawAxises() {
+			auto imageZeroPoint = getImageZeroPoint();
 			if (m_enableYAxis && m_xStart < 0 && m_xEnd > 0) {
-				drawVerticalLine(getVertivalZeroIndex(), 0, m_height, ColorRGB(0, 0, 0));
+				drawVerticalLine(imageZeroPoint.x, 0, m_height, ColorRGB(0, 0, 0));
 			}
 			if (m_enableXAxis && m_yStart < 0 && m_yEnd > 0) {
-				drawHorizontalLine(0, getHorizontalZeroIndex(), m_width, ColorRGB(0, 0, 0));
+				drawHorizontalLine(0, imageZeroPoint.y, m_width, ColorRGB(0, 0, 0));
 			}
 		}
 
 		void drawTarget(float x, float y, ColorRGB const& color) {
-			int const xCenter = std::round((x - m_xStart) * m_xScale);
-			int const yCenter = m_height - 1 - std::round((y - m_yStart) * m_yScale);
 			int const len = 9;
 			int const lenDiv2 = len / 2;
-			drawHorizontalLine(xCenter - lenDiv2, yCenter, len, color);
-			drawVerticalLine(xCenter, yCenter - lenDiv2, len, color);
-			drawLine(xCenter - lenDiv2, xCenter + lenDiv2, yCenter - lenDiv2, yCenter + lenDiv2, color);
-			drawLine(xCenter - lenDiv2, xCenter + lenDiv2, yCenter + lenDiv2, yCenter - lenDiv2, color);
+			auto targetCenterPoint = toImage(Vector3f(x, y, 1));
+			drawHorizontalLine(targetCenterPoint.x - lenDiv2, targetCenterPoint.y, len, color);
+			drawVerticalLine(targetCenterPoint.x, targetCenterPoint.y - lenDiv2, len, color);
+			drawLine(targetCenterPoint - lenDiv2, targetCenterPoint + lenDiv2, color);
+			drawLine(targetCenterPoint + Vector2i(-lenDiv2, lenDiv2), targetCenterPoint + Vector2i(lenDiv2, -lenDiv2), color);
 		}
 
 	private:
+
+		Vector2i getImageZeroPoint() const {
+			return toImage(Vector3f(0, 0, 1));
+		}
+
+		Vector2i toImage(Vector2f const& worldVector) const {
+			return toImage(Vector3f(worldVector.x, worldVector.y, 1));
+		}
+
+		Vector2i toImage(Vector3f const& worldVector) const {
+			auto imageVector2f = (m_worldToImage * worldVector).xy();
+			return Vector2i(std::round(imageVector2f.x), std::round(imageVector2f.y));
+		}
+
+		bool m_enableXAxis = false;
+		bool m_enableYAxis = false;
+		bool m_enableCurveNamesTable = false;
 
 		float m_xStart = -1.0f;
 		float m_xEnd = 1.0f;
@@ -220,9 +233,7 @@ namespace bm {
 		float m_xScale = 1.0f;
 		float m_yScale = 1.0f;
 
-		bool m_enableXAxis = false;
-		bool m_enableYAxis = false;
-		bool m_enableCurveNamesTable = false;
+		Matrix3f m_worldToImage;
 
 		ColorRGB m_bgColor = ColorRGB(255, 255, 255);
 

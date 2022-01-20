@@ -45,15 +45,15 @@ namespace bm {
 			}
 		}
 
-		int getWidth() {
+		int getWidth() const {
 			return m_width;
 		}
 
-		int getHeight() {
+		int getHeight() const {
 			return m_height;
 		}
 
-		bool isValid() {
+		bool isValid() const {
 			return m_pixels != nullptr;
 		}
 
@@ -62,9 +62,18 @@ namespace bm {
 			return m_pixels[y * m_width + x];
 		}
 
+		ColorRGB_<T>& getPixel(Vector2i const &pos) {
+			getPixel(pos.x, pos.y);
+		}
+
 		ColorRGB_<T> const &getPixel(int x, int y) const {
 			assert(x >= 0 && x < m_width && y >= 0 && y < m_height);
 			return m_pixels[h * m_width + x];
+		}
+
+
+		ColorRGB_<T> const& getPixel(Vector2i const& pos) const {
+			getPixel(pos.x, pos.y);
 		}
 
 		void drawPixel(int x, int y, ColorRGB_<T> const& color) {
@@ -96,12 +105,24 @@ namespace bm {
 
 		}
 
+		void drawLine(Vector2i const& from, Vector2i const& to, ColorRGB_<T> const& color) {
+			drawLine(from.x, to.x, from.y, to.y, color);
+		}
+
 		void drawHorizontalLine(int x0, int y0, int len, ColorRGB_<T> const& color) {
 			for (int i = 0; i < len; ++i) { drawPixel(x0 + i, y0, color); }
 		}
 
+		void drawHorizontalLine(Vector2i const& from, int len, ColorRGB_<T> const& color) {
+			drawHorizontalLine(from.x, from.y, len, color);
+		}
+
 		void drawVerticalLine(int x0, int y0, int len, ColorRGB_<T> const& color) {
 			for (int i = 0; i < len; ++i) { drawPixel(x0, y0 + i, color); }
+		}
+
+		void drawVerticalLine(Vector2i const& from, int len, ColorRGB_<T> const& color) {
+			drawVerticalLine(from.x, from.y, len, color);
 		}
 
 		void drawHorizontalGrid(int y0, int yStep, int yWidth, ColorRGB_<T> const& color) {
@@ -149,6 +170,10 @@ namespace bm {
 			}
 		}
 
+		void drawKey(Vector2i const& leftCornerPoint, char key, ColorRGB_<T> const& color) {
+			drawKey(leftCornerPoint.x, leftCornerPoint.y, key, color);
+		}
+
 		void drawRectangle(int x0, int y0, int width, int height, ColorRGB_<T> const& borderColor, ColorRGB_<T> const& fillColor) {
 			drawVerticalLine(x0, y0, height, borderColor);
 			drawVerticalLine(x0 + width - 1, y0, height, borderColor);
@@ -157,10 +182,18 @@ namespace bm {
 			drawRectangle(x0 + 1, y0 + 1, width - 2, height - 2, fillColor);
 		}
 
+		void drawRectangle(Vector2i const& leftCornerPoint, int width, int height, ColorRGB_<T> const& borderColor, ColorRGB_<T> const& fillColor) {
+			drawRectangle(leftCornerPoint.x, leftCornerPoint.y, width, height, borderColor, fillColor);
+		}
+
 		void drawRectangle(int x0, int y0, int width, int height, ColorRGB_<T> const& fillColor) {
 			for (int xi = x0, xn = x0 + width; xi < xn; ++xi) {
 				drawVerticalLine(xi, y0, height, fillColor);
 			}
+		}
+
+		void drawRectangle(Vector2i const& leftCornerPoint, int width, int height, ColorRGB_<T> const& fillColor) {
+			drawRectangle(leftCornerPoint.x, leftCornerPoint.y, width, height, fillColor);
 		}
 		
 		void drawString(int x, int y, std::string const& str, ColorRGB_<T> const& color) {
@@ -168,6 +201,10 @@ namespace bm {
 				drawKey(x, y, str[i], color);
 				x += 8;
 			}
+		}
+
+		void drawString(Vector2i const& leftCornerPoint, std::string const& str, ColorRGB_<T> const& color) {
+			drawString(leftCornerPoint.x, leftCornerPoint.y, str, color);
 		}
 
 		void fill(ColorRGB_<T> const &color) {

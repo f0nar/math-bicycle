@@ -22,7 +22,7 @@ namespace bm {
 			for (int i = 0; i < Len; ++i) { \
 				res.vals[i] = this->vals[i] OP other OTHER_ACCES; \
 			} \
-				return res; \
+			return res; \
 		}
 
 		template <int Len, typename T>
@@ -37,7 +37,7 @@ namespace bm {
 			}
 
 			template <typename ...Ts>
-			VectorBase(Ts ... args) : vals{ T(args)... } {
+			explicit VectorBase(Ts ... args) : vals{ T(args)... } {
 				static_assert(sizeof...(args) == Len, "Number of vector constructor arguments should be equal to its length.");
 			}
 
@@ -46,8 +46,10 @@ namespace bm {
 			BINARY_OPERATOR(-, TEMPLATE_VECTOR, .vals[i]);
 			BINARY_OPERATOR(*, TEMPLATE_VECTOR, .vals[i]);
 			BINARY_OPERATOR(/, TEMPLATE_VECTOR, .vals[i]);
-			BINARY_OPERATOR(/, float);
-			BINARY_OPERATOR(*, float);
+			BINARY_OPERATOR(/, T);
+			BINARY_OPERATOR(*, T);
+			BINARY_OPERATOR(+ , T);
+			BINARY_OPERATOR(-, T);
 
 			T const &at(int index) const {
 				assert(index >= 0 && index < Len);
@@ -63,6 +65,12 @@ namespace bm {
 				auto res = this->vals[0] * other.vals[0];
 				for (int i = 1; i < Len; ++i) res = std::fma(this->vals[i], other.vals[i], res);
 				return res;
+			}
+
+			auto norm() const {
+				auto squaresSum = vals[0] * vals[0];
+				for (int i = 1; i < Len; ++i) { squaresSum += vals[i] * vals[i]; }
+				return std::sqrt(squaresSum);
 			}
 
 			bool operator==(Vector<Len, T> const& other) const {
@@ -107,6 +115,14 @@ namespace bm {
 
 		VECTOR_ASSIGN_OPERATOR(4);
 
+		Vector<2, T> xy() const {
+			return Vector<2, T>(x, y);
+		}
+
+		Vector<3, T> xyz() const {
+			return Vector<3, T>(x, y, z);
+		}
+
 		T& x = this->vals[0];
 		T& y = this->vals[1];
 		T& z = this->vals[2];
@@ -129,6 +145,10 @@ namespace bm {
 				this->at(2) * other.at(0) - this->at(0) * other.at(2),
 				this->at(0) * other.at(1) - this->at(1) * other.at(0)
 			});
+		}
+
+		Vector<2, T> xy() const {
+			return Vector<2, T>(x, y);
 		}
 
 		T& x = this->vals[0];

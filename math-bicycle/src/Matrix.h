@@ -3,6 +3,7 @@
 
 #include <type_traits>
 #include "Vector.h"
+#include "Point.h"
 
 namespace bm {
 
@@ -292,6 +293,18 @@ namespace bm {
 			}
 
 			return resVec;
+		}
+
+		Point<Rows, T> operator*(Point<Cols, T> const& point) const {
+			Point<Rows, T> resPoint;
+			for (int i = 0; i < Rows; ++i) {
+				resPoint[i] = at(i, 0) * point.at(0);
+				for (int j = 1; j < Cols; ++j) {
+					resPoint[i] = resPoint[i] + at(i, j) * point.at(j);
+				}
+			}
+
+			return resPoint;
 		}
 	};
 

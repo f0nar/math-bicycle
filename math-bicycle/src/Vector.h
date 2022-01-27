@@ -30,9 +30,15 @@ namespace bm {
 
 			VectorBase() : vals{ T() } { }
 
-			VectorBase(T const (&data)[Len]) {
+			explicit VectorBase(T const (&data)[Len]) {
 				for (int i = 0; i < Len; ++i) {
 					vals[i] = T{ data[i] };
+				}
+			}
+
+			explicit VectorBase(T const& initValue) {
+				for (int i = 0; i < Len; ++i) {
+					vals[i] = T{ initValue };
 				}
 			}
 

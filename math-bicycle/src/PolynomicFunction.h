@@ -125,10 +125,11 @@ namespace bm {
 			};
 			auto continue_polynom_string = [&to_string_without_trailing_zeros](std::string& src, T const& coef, int pow) {
 				if (!coef) return;
-				if (coef > 0) src += '+';
-				src += to_string_without_trailing_zeros(coef);
+				auto str_coef = to_string_without_trailing_zeros(coef);
+				if (str_coef == "0") return;
+				if (coef > 0 && pow != N) src += '+';
 				if (pow > 0) {
-					src += "*X";
+					src += str_coef == "1" ? "X" : "*X";
 					if (pow > 1) src += "^" + to_string_without_trailing_zeros(pow);
 				}
 			};

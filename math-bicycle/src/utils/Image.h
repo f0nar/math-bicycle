@@ -1,12 +1,14 @@
 #ifndef _BICYCLE_IMAGE_H_
 #define _BICYCLE_IMAGE_H_
 
-#include <string>
-#include <cassert>
 #include <algorithm>
+#include <cassert>
 #include <cmath>
+#include <string>
 
 #include "../Color.h"
+#include "../Point.h"
+#include "../Vector.h"
 #include "./Fonts.h"
 
 #define STB_IMAGE_WRITE_STATIC
@@ -62,7 +64,7 @@ namespace bm {
 			return m_pixels[y * m_width + x];
 		}
 
-		ColorRGB_<T>& getPixel(Vector2i const &pos) {
+		ColorRGB_<T>& getPixel(Point2i const &pos) {
 			getPixel(pos.x, pos.y);
 		}
 
@@ -72,7 +74,7 @@ namespace bm {
 		}
 
 
-		ColorRGB_<T> const& getPixel(Vector2i const& pos) const {
+		ColorRGB_<T> const& getPixel(Point2i const& pos) const {
 			getPixel(pos.x, pos.y);
 		}
 
@@ -105,7 +107,7 @@ namespace bm {
 
 		}
 
-		void drawLine(Vector2i const& from, Vector2i const& to, ColorRGB_<T> const& color) {
+		void drawLine(Point2i const& from, Point2i const& to, ColorRGB_<T> const& color) {
 			drawLine(from.x, to.x, from.y, to.y, color);
 		}
 
@@ -113,7 +115,7 @@ namespace bm {
 			for (int i = 0; i < len; ++i) { drawPixel(x0 + i, y0, color); }
 		}
 
-		void drawHorizontalLine(Vector2i const& from, int len, ColorRGB_<T> const& color) {
+		void drawHorizontalLine(Point2i const& from, int len, ColorRGB_<T> const& color) {
 			drawHorizontalLine(from.x, from.y, len, color);
 		}
 
@@ -121,7 +123,7 @@ namespace bm {
 			for (int i = 0; i < len; ++i) { drawPixel(x0, y0 + i, color); }
 		}
 
-		void drawVerticalLine(Vector2i const& from, int len, ColorRGB_<T> const& color) {
+		void drawVerticalLine(Point2i const& from, int len, ColorRGB_<T> const& color) {
 			drawVerticalLine(from.x, from.y, len, color);
 		}
 
@@ -170,7 +172,7 @@ namespace bm {
 			}
 		}
 
-		void drawKey(Vector2i const& leftCornerPoint, char key, ColorRGB_<T> const& color) {
+		void drawKey(Point2i const& leftCornerPoint, char key, ColorRGB_<T> const& color) {
 			drawKey(leftCornerPoint.x, leftCornerPoint.y, key, color);
 		}
 
@@ -182,7 +184,7 @@ namespace bm {
 			drawRectangle(x0 + 1, y0 + 1, width - 2, height - 2, fillColor);
 		}
 
-		void drawRectangle(Vector2i const& leftCornerPoint, int width, int height, ColorRGB_<T> const& borderColor, ColorRGB_<T> const& fillColor) {
+		void drawRectangle(Point2i const& leftCornerPoint, int width, int height, ColorRGB_<T> const& borderColor, ColorRGB_<T> const& fillColor) {
 			drawRectangle(leftCornerPoint.x, leftCornerPoint.y, width, height, borderColor, fillColor);
 		}
 
@@ -192,7 +194,7 @@ namespace bm {
 			}
 		}
 
-		void drawRectangle(Vector2i const& leftCornerPoint, int width, int height, ColorRGB_<T> const& fillColor) {
+		void drawRectangle(Point2i const& leftCornerPoint, int width, int height, ColorRGB_<T> const& fillColor) {
 			drawRectangle(leftCornerPoint.x, leftCornerPoint.y, width, height, fillColor);
 		}
 		
@@ -203,7 +205,7 @@ namespace bm {
 			}
 		}
 
-		void drawString(Vector2i const& leftCornerPoint, std::string const& str, ColorRGB_<T> const& color) {
+		void drawString(Point2i const& leftCornerPoint, std::string const& str, ColorRGB_<T> const& color) {
 			drawString(leftCornerPoint.x, leftCornerPoint.y, str, color);
 		}
 

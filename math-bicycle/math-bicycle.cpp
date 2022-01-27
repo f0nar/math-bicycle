@@ -1,4 +1,5 @@
 ﻿#include <array>
+#include <iostream>
 
 #include "src/Color.h"
 #include "src/PolynomicFunction.h"
@@ -9,14 +10,14 @@ using namespace bm;
 int main() {
 	int const width = 512;
 	int const height = 512;
-	float const xStart = -2.5;
-	float const xEnd = 2.5;
-	int const targetsNumber = 6;
-	float const step = (xEnd - xStart) / (targetsNumber + 1);
+	float const xStart = 0;
+	float const xEnd = 4;
+	int const targetsNumber = 3;
+	float const step = (xEnd - xStart) / targetsNumber;
 	float const halfStep = step / 2;
 	Xf X;
 
-	auto polFunc1 = 3.0f * X * X * X * X * X - 25.0f * X * X * X + 60.0f * X + 1.0f;
+	auto polFunc1 = X * X; // 3.0f * X * X * X * X * X - 25.0f * X * X * X + 60.0f * X + 1.0f;
 	// auto polFunc2 = 7.0f * X * X * X * X - 2.0f * X * X * X + -5.0f * X * X + 15.0f;
 	// auto polFunc3 = 9.0f * X * (X - xStart) * (X - xEnd);
 
@@ -24,10 +25,10 @@ int main() {
 	plot.setRange(xStart, xEnd);
 	plot.enableXAxis(true);
 	plot.enableYAxis(true);
-	plot.enableCurveNamesTable(true);
-	plot.addGrid(0.5, ColorRGB(200, 200, 200), GridType::Vertical);
-	plot.addGrid(10, ColorRGB(200, 200, 200), GridType::Horizontal);
-	plot.addCurve(polFunc1.toString(), polFunc1, ColorRGB(128, 55, 0));
+	// plot.enableCurveNamesTable(true);
+	plot.addGrid(1, ColorRGB(200, 200, 200), GridType::Vertical);
+	plot.addGrid(1, ColorRGB(200, 200, 200), GridType::Horizontal);
+	plot.addCurve(polFunc1.toString() + " (original)", polFunc1, ColorRGB(128, 55, 0));
 	// plot.addCurve(polFunc2.toString(), polFunc2, ColorRGB(0, 55, 128));
 	// plot.addCurve(polFunc3.toString(), polFunc3, ColorRGB(0, 128, 128));
 
@@ -36,11 +37,12 @@ int main() {
 		auto& point = poly_points[i];
 		point.x = xStart + halfStep + step * i;
 		point.y = polFunc1(point.x);
-		plot.addTarget(point.x, point.y, ColorRGB(100, 100, 0));
+	//	plot.addTarget(point.x, point.y, ColorRGB(100, 100, 0));
 	}
-	auto const& recoveredFunc = fitPoly(poly_points);
-	plot.addCurve(recoveredFunc.toString(), recoveredFunc, ColorRGB(0, 55, 128));
+	// auto const& recoveredFunc = fitPoly(poly_points);
+	// plot.addCurve(recoveredFunc.toString() + " (recovered)", recoveredFunc, ColorRGB(0, 55, 128));
 
 	plot.update();
+	
 	return plot.save("plot_test.jpg");
 }

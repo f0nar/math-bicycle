@@ -97,8 +97,8 @@ namespace bm {
 				for (auto const& [name, curveData] : m_curvesMap) {
 					auto& resultsPtr = results[i];
 					for (int j = 0; j < values - 1; ++j) {
-						Vector3f fromWorld(j * xStep, resultsPtr[j], 1);
-						Vector3f toWorld((j + 1) * xStep, resultsPtr[(j + 1)], 1);
+						Point3f fromWorld(j * xStep, resultsPtr[j], 1);
+						Point3f toWorld((j + 1) * xStep, resultsPtr[(j + 1)], 1);
 						drawLine(toImage(fromWorld), toImage(toWorld), curveData.color);
 					}
 					++i;
@@ -200,26 +200,26 @@ namespace bm {
 		void drawTarget(float x, float y, ColorRGB const& color) {
 			int const len = 9;
 			int const lenDiv2 = len / 2;
-			auto targetCenterPoint = toImage(Vector3f(x, y, 1));
+			auto targetCenterPoint = toImage(Point3f(x, y, 1));
 			drawHorizontalLine(targetCenterPoint.x - lenDiv2, targetCenterPoint.y, len, color);
 			drawVerticalLine(targetCenterPoint.x, targetCenterPoint.y - lenDiv2, len, color);
-			drawLine(targetCenterPoint - lenDiv2, targetCenterPoint + lenDiv2, color);
+			drawLine(targetCenterPoint - Vector2i(lenDiv2), targetCenterPoint + Vector2i(lenDiv2), color);
 			drawLine(targetCenterPoint + Vector2i(-lenDiv2, lenDiv2), targetCenterPoint + Vector2i(lenDiv2, -lenDiv2), color);
 		}
 
 	private:
 
-		Vector2i getImageZeroPoint() const {
-			return toImage(Vector3f(0, 0, 1));
+		Point2i getImageZeroPoint() const {
+			return toImage(Point3f(0, 0, 1));
 		}
 
-		Vector2i toImage(Vector2f const& worldVector) const {
-			return toImage(Vector3f(worldVector.x, worldVector.y, 1));
+		Point2i toImage(Point2f const& worldPoint) const {
+			return toImage(Point3f(worldPoint.x, worldPoint.y, 1));
 		}
 
-		Vector2i toImage(Vector3f const& worldVector) const {
-			auto imageVector2f = (m_worldToImage * worldVector).xy();
-			return Vector2i(std::round(imageVector2f.x), std::round(imageVector2f.y));
+		Point2i toImage(Point3f const& worldPoint) const {
+			auto imageVector2f = (m_worldToImage * worldPoint).xy();
+			return Point2i(std::round(imageVector2f.x), std::round(imageVector2f.y));
 		}
 
 		bool m_enableXAxis = false;

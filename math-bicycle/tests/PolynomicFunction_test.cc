@@ -1,6 +1,6 @@
 #include <cmath>
 #include <gtest/gtest.h>
-#include "../../math-bicycle/src/PolynomicFunction.h"
+#include "../src/PolynomicFunction.h"
 
 bm::Xf const X;
 float const precission = 1e-3f, precission_div_2 = precission / 2.0f;

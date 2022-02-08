@@ -25,13 +25,15 @@ add_executable (
 	"third/stb_image.h"
 	"src/utils/Fonts.h"
 	"src/Point.h"
- )
+	"src/RationalFunction.h"
+)
 
 add_executable(
   "math_bicycle_test"
   "tests/Matrix_test.cc"
   "tests/Vector_test.cc"
   "tests/PolynomicFunction_test.cc"
+  "tests/RationalFunction_test.cc"
 )
 
 target_link_libraries(

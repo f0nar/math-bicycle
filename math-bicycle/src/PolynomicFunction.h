@@ -15,7 +15,6 @@ namespace bm {
 
 	#define POL_FUNC_POW(N1, N2) (N1 + N2)
 
-
 	template <typename T>
 	struct Function {
 		virtual std::string toString() const = 0;

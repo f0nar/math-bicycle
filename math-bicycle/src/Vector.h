@@ -11,19 +11,26 @@ namespace bm {
 	template <int Len, typename T>
 	struct Vector;
 
+	#define BINARY_OPERATOR(OP, OTHER_T, OTHER_ACCES) \
+	auto operator OP(OTHER_T const& other) const { \
+		Vector<Len, T> res; \
+		for (int i = 0; i < Len; ++i) { \
+			res.vals[i] = this->vals[i] OP other OTHER_ACCES; \
+		} \
+		return res; \
+	}
+
+	#define VECTOR_ASSIGN_OPERATOR(Len) \
+	Vector & operator=(Vector const& another) { \
+		for (int i = 0; i < Len; ++i) { vals[i] = T(another.vals[i]); } \
+		return *this; \
+	}
+
 	class _VectorInternal {
 
 		template <int Len, typename T>
 		friend struct Vector;
 
-		#define BINARY_OPERATOR(OP, OTHER_T, OTHER_ACCES) \
-		auto operator OP(OTHER_T const& other) const { \
-			Vector<Len, T> res; \
-			for (int i = 0; i < Len; ++i) { \
-				res.vals[i] = this->vals[i] OP other OTHER_ACCES; \
-			} \
-			return res; \
-		}
 
 		template <int Len, typename T>
 		struct VectorBase {
@@ -56,6 +63,7 @@ namespace bm {
 			BINARY_OPERATOR(*, T);
 			BINARY_OPERATOR(+ , T);
 			BINARY_OPERATOR(-, T);
+			#undef TEMPLATE_VECTOR
 
 			T const &at(int index) const {
 				assert(index >= 0 && index < Len);
@@ -95,13 +103,8 @@ namespace bm {
 			T vals[Len];
 
 		};
-	};
 
-	#define VECTOR_ASSIGN_OPERATOR(Len) \
-	Vector & operator=(Vector const& another) { \
-		for (int i = 0; i < Len; ++i) { vals[i] = T(another.vals[i]); } \
-		return *this; \
-	}
+	};
 
 	template <int Len = 3, typename T = float>
 	struct Vector : _VectorInternal::VectorBase<Len, T> {
@@ -210,6 +213,9 @@ namespace bm {
 	using Vector4ui = Vector<4, unsigned int>;
 	using Vector3ui = Vector<3, unsigned int>;
 	using Vector2ui = Vector<2, unsigned int>;
+
+	#undef BINARY_OPERATOR
+	#undef VECTOR_ASSIGN_OPERATOR
 };
 
 #endif // !_BICYCLE_VECTOR_H_

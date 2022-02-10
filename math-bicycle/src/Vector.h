@@ -146,6 +146,8 @@ namespace bm {
 
 		Vector(Vector const& other) : Vector(other.x, other.y, other.z) {}
 
+		explicit Vector(Vector<2, T> const& other2d, T const& z = T()) : Vector(other2d.x, other2d.y, z) {}
+
 		VECTOR_ASSIGN_OPERATOR(3);
 
 		Vector cross(Vector const& other) const {
@@ -196,6 +198,13 @@ namespace bm {
 		}
 
 		return true;
+	}
+
+	template <typename ToType, typename FromType, int Len>
+	Vector<Len, ToType> changeT(Vector<Len, FromType> const& fromVec) {
+		ToType initArray[Len] = { ToType() };
+		for (int i = 0; i < Len; ++i) initArray[i] = fromVec.at(i);
+		return Vector<Len, ToType>(initArray);
 	}
 
 	using Vector4f = Vector<4, float>;

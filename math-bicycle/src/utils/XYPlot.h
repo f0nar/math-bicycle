@@ -6,6 +6,7 @@
 #include <functional>
 #include <vector>
 #include <map>
+#include <limits>
 #include "./Image.h"
 
 namespace bm {
@@ -57,26 +58,34 @@ namespace bm {
 			m_enableCurveNamesTable = enable;
 		}
 
+		void setMaxY(float maxY) {
+			m_yMax = maxY;
+		}
+
+		void setMinY(float minY) {
+			m_yMin = minY;
+		}
+
 		void update() {
 			fill(m_bgColor);
 
 			int values = std::round(std::sqrt(m_height * m_height + m_width * m_width) / 10);
-			std::vector<std::unique_ptr<float[]>> results;
+			std::vector<std::vector<float>> results;
 			float minRes = INFINITY;
 			float maxRes = -INFINITY;
 			float const step = (m_xEnd - m_xStart) / (values - 1);
 
 			for (auto const& [name, curveData] : m_curvesMap) {
-				auto& resultsPtr = results.emplace_back(new float[values]);
+				auto& resultsVector = results.emplace_back(values);
 				for (int j = 0; j < values; ++j) {
-					float resI = resultsPtr[j] = curveData.func(m_xStart + j * step);
-					if (resI < minRes) minRes = resI;
-					else if (maxRes < resI) maxRes = resI;
+					float resI = resultsVector[j] = curveData.func(m_xStart + j * step);
+					if (resI < minRes) { minRes = resI; }
+					else if (maxRes < resI) { maxRes = resI; }
 				}
 			}
 
-			m_yStart = minRes;
-			m_yEnd = maxRes;
+			m_yStart = std::max(minRes, m_yMin);
+			m_yEnd = std::min(maxRes, m_yMax);
 			m_xScale = (m_width - 1.0f) / (m_xEnd - m_xStart);
 			m_yScale = (m_height - 1.0f) / (m_yEnd - m_yStart);
 			{
@@ -95,11 +104,15 @@ namespace bm {
 				int i = 0;
 				float xStep = (m_xEnd - m_xStart) / (values - 1);
 				for (auto const& [name, curveData] : m_curvesMap) {
-					auto& resultsPtr = results[i];
+					auto& resultsVec = results[i];
 					for (int j = 0; j < values - 1; ++j) {
-						Point3f fromWorld(j * xStep, resultsPtr[j], 1);
-						Point3f toWorld((j + 1) * xStep, resultsPtr[(j + 1)], 1);
-						drawLine(toImage(fromWorld), toImage(toWorld), curveData.color);
+						float currRes = resultsVec[j];
+						float nextRes = resultsVec[j + 1];
+						if (!isnan(currRes) && !isnan(nextRes)) {
+							Point3f fromWorld(m_xStart + j * xStep, resultsVec[j], 1);
+							Point3f toWorld(m_xStart + (j + 1) * xStep, resultsVec[(j + 1)], 1);
+							drawLine(toImage(fromWorld), toImage(toWorld), curveData.color);
+						}
 					}
 					++i;
 				}
@@ -200,7 +213,7 @@ namespace bm {
 		void drawTarget(float x, float y, ColorRGB const& color) {
 			int const len = 9;
 			int const lenDiv2 = len / 2;
-			auto targetCenterPoint = toImage(Point3f(x, y, 1));
+			auto targetCenterPoint = toImage(Point3f(x, y, 0));
 			drawHorizontalLine(targetCenterPoint.x - lenDiv2, targetCenterPoint.y, len, color);
 			drawVerticalLine(targetCenterPoint.x, targetCenterPoint.y - lenDiv2, len, color);
 			drawLine(targetCenterPoint - Vector2i(lenDiv2), targetCenterPoint + Vector2i(lenDiv2), color);
@@ -232,6 +245,8 @@ namespace bm {
 		float m_yEnd = 1.0f;
 		float m_xScale = 1.0f;
 		float m_yScale = 1.0f;
+		float m_yMax = std::numeric_limits<float>::max();
+		float m_yMin = std::numeric_limits<float>::min();
 
 		Matrix3f m_worldToImage;
 

@@ -83,32 +83,38 @@ namespace bm {
 		}
 
 		void drawLine(int x0, int xn, int y0, int yn, ColorRGB_<T> const& color) {
-			const int deltaX = abs(xn - x0);
-			const int deltaY = abs(yn - y0);
-			const int signX = x0 < xn ? 1 : -1;
-			const int signY = y0 < yn ? 1 : -1;
-			int error = deltaX - deltaY;
-			drawPixel(xn, yn, color);
-			while (x0 != xn || y0 != yn)
-			{
-				drawPixel(x0, y0, color);
-				int error2 = error * 2;
-				if (error2 > -deltaY)
-				{
-					error -= deltaY;
-					x0 += signX;
-				}
-				if (error2 < deltaX)
-				{
-					error += deltaX;
-					y0 += signY;
-				}
-			}
-
+			drawLine(Point2i(x0, y0), Point2i(xn, yn), color);
 		}
 
 		void drawLine(Point2i const& from, Point2i const& to, ColorRGB_<T> const& color) {
-			drawLine(from.x, to.x, from.y, to.y, color);
+			bool const isFromPointInRange = isInImageRange(from), isToPointInRange = isInImageRange(to);
+			if (isFromPointInRange && isToPointInRange) {
+				drawLineInRange(from.x, to.x, from.y, to.y, color);
+			} else if (isCrossImageBounds(from, to)) {
+				int const cornersSequense[] = { 0, 1, 2, 3, 0 };
+				Point2f corners[] = { Point2f(0, 0), Point2f(m_width - 1, 0), Point2f(m_width - 1, m_height - 1), Point2f(0, m_height - 1) };
+				Point2f fromf = changeT<float>(from), tof = changeT<float>(to);
+				std::vector<Point2i> intersectionPoints;
+				for (int i = 0; i < 4; ++i) {
+					if (isCrossLine(fromf, tof, corners[i], corners[i + 1])) {
+						auto lineVec = Vector<3>(fromf - tof);
+						auto boundVec = Vector<3>(corners[i] - corners[i + 1]);
+						auto prodVec1 = boundVec.cross(Vector<3>(tof - corners[i]));
+						auto prodVec2 = boundVec.cross(Vector<3>(fromf - corners[i]));
+						intersectionPoints.emplace_back(
+							std::round(tof.x + lineVec.x * std::fabs(prodVec1.z) / std::fabs(prodVec2.z - prodVec1.z)),
+							std::round(tof.y + lineVec.y * std::fabs(prodVec1.z) / std::fabs(prodVec2.z - prodVec1.z))
+						);
+					}
+				}
+				if (intersectionPoints.size() == 2) {
+					auto ip1 = intersectionPoints[0], ip2 = intersectionPoints[1];
+					drawLineInRange(ip1.x, ip2.x, ip1.y, ip2.y, color);
+				} else if (intersectionPoints.size() == 1) {
+					auto ip1 = intersectionPoints[0], ip2 = isFromPointInRange ? from : to;
+					drawLineInRange(ip1.x, ip2.x, ip1.y, ip2.y, color);
+				}
+			}
 		}
 
 		void drawHorizontalLine(int x0, int y0, int len, ColorRGB_<T> const& color) {
@@ -235,6 +241,59 @@ namespace bm {
 		~Image() { delete[] m_pixels; }
 
 	protected:
+
+		//Bresenham's line algorithm
+		void drawLineInRange(int x0, int xn, int y0, int yn, ColorRGB_<T> const& color) {
+			const int deltaX = abs(xn - x0);
+			const int deltaY = abs(yn - y0);
+			const int signX = x0 < xn ? 1 : -1;
+			const int signY = y0 < yn ? 1 : -1;
+			int error = deltaX - deltaY;
+			drawPixel(xn, yn, color);
+			while (x0 != xn || y0 != yn)
+			{
+				drawPixel(x0, y0, color);
+				int error2 = error * 2;
+				if (error2 > -deltaY)
+				{
+					error -= deltaY;
+					x0 += signX;
+				}
+				if (error2 < deltaX)
+				{
+					error += deltaX;
+					y0 += signY;
+				}
+			}
+
+		}
+
+		bool isCrossLine(Point2f const& from1, Point2f const& to1, Point2f const& from2, Point2f const& to2) const {
+			auto checkProducts = [](Vector3f const& prodVec1, Vector3f const& prodVec2) { return std::signbit(prodVec1.z) != std::signbit(prodVec2.z); };
+			auto vec1 = Vector<3>(to1 - from1), vec2 = Vector<3>(to2 - from2);
+			return
+				checkProducts(vec1.cross(Vector<3>(to1 - from2)), vec1.cross(Vector<3>(to1 - to2))) &&
+				checkProducts(vec2.cross(Vector<3>(to2 - from1)), vec2.cross(Vector<3>(to2 - to1)));
+		}
+
+		bool isCrossImageBounds(Point2i const& from, Point2i const& to) const {
+			Point2f topLeft(0, 0), topRight(m_width - 1, 0), bottomLeft(0, m_height - 1), bottomRight(m_width - 1, m_height - 1), fromf = changeT<float>(from), tof = changeT<float>(to);
+			return
+				isCrossLine(fromf, tof, topLeft, topRight) || isCrossLine(fromf, tof, topLeft, bottomLeft) ||
+				isCrossLine(fromf, tof, topRight, bottomRight) || isCrossLine(fromf, tof, bottomLeft, bottomRight);
+		}
+
+		bool isInImageRange(Point2i const& point) const {
+			return isInXRange(point) && isInYRange(point);
+		}
+
+		bool isInXRange(Point2i const& point) const {
+			return point.x >= 0 && point.x < m_width;
+		}
+
+		bool isInYRange(Point2i const& point) const {
+			return point.y >= 0 && point.y < m_height;
+		}
 
 		int m_width;
 		int m_height;

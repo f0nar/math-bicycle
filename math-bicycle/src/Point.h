@@ -166,6 +166,14 @@ namespace bm {
 		return true;
 	}
 
+
+	template <typename ToType, typename FromType, int Len>
+	Point<Len, ToType> changeT(Point<Len, FromType> const& fromVec) {
+		ToType initArray[Len] = { ToType() };
+		for (int i = 0; i < Len; ++i) initArray[i] = ToType(fromVec.at(i));
+		return Point<Len, ToType>(initArray);
+	}
+
 	using Point4f = Point<4, float>;
 	using Point3f = Point<3, float>;
 	using Point2f = Point<2, float>;

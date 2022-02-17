@@ -69,7 +69,7 @@ namespace bm {
 		void update() {
 			fill(m_bgColor);
 
-			int values = std::round(std::sqrt(m_height * m_height + m_width * m_width) / 10);
+			int values = std::round(std::sqrt(m_height * m_height + m_width * m_width));
 			std::vector<std::vector<float>> results;
 			float minRes = INFINITY;
 			float maxRes = -INFINITY;
@@ -157,12 +157,12 @@ namespace bm {
 			for (const auto& grid : m_grids) {
 				if (grid.type != GridType::Vertical) {
 					int const stepInPixels =  std::round(grid.step * m_yScale);
-					int const startInPixels = imageZeroPoint.x % stepInPixels;
+					int const startInPixels = imageZeroPoint.y % stepInPixels;
 					drawHorizontalGrid(startInPixels, stepInPixels - 1, 1, grid.color);
 				}
 				if (grid.type != GridType::Horizontal) {
 					int const stepInPixels = std::round(grid.step * m_xScale);
-					int const startInPixels = imageZeroPoint.y % stepInPixels;
+					int const startInPixels = imageZeroPoint.x % stepInPixels;
 					drawVerticalGrid(startInPixels, stepInPixels - 1, 1, grid.color);
 				}
 			}

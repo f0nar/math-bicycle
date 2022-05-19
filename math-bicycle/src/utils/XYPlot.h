@@ -7,13 +7,12 @@
 #include <vector>
 #include <map>
 #include <limits>
+#include <sstream>
 #include "./Image.h"
 
 namespace bm {
 
 	using uchar = unsigned char;
-
-	using XYPlotCurve = std::function<float(float)>;
 
 	enum class GridType {
 		Vertical,
@@ -21,7 +20,10 @@ namespace bm {
 		Both
 	};
 
+	template <typename T>
 	struct XYPlot : public Image<uchar> {
+
+		using XYPlotCurve = std::function<T(T)>;
 
 		XYPlot(int w, int h) : Image<uchar>::Image(w, h, ColorRGB(255, 255, 255)) { }
 
@@ -33,15 +35,15 @@ namespace bm {
 			m_curvesMap.emplace(name, XYPlotCurveData(curve, color));
 		}
 
-		void addTarget(float x, float y, ColorRGB const& color) {
+		void addTarget(T x, T y, ColorRGB const& color) {
 			m_targets.emplace_back(x, y, color);
 		}
 
-		void addGrid(float step, ColorRGB const& color, GridType gridType = GridType::Both) {
+		void addGrid(T step, ColorRGB const& color, GridType gridType = GridType::Both) {
 			m_grids.emplace_back(step, color, gridType);
 		}
 
-		void setRange(float x0, float xn) {
+		void setRange(T x0, T xn) {
 			m_xStart = x0;
 			m_xEnd = xn;
 		}
@@ -58,11 +60,11 @@ namespace bm {
 			m_enableCurveNamesTable = enable;
 		}
 
-		void setMaxY(float maxY) {
+		void setMaxY(T maxY) {
 			m_yMax = maxY;
 		}
 
-		void setMinY(float minY) {
+		void setMinY(T minY) {
 			m_yMin = minY;
 		}
 
@@ -70,15 +72,15 @@ namespace bm {
 			fill(m_bgColor);
 
 			int values = std::round(std::sqrt(m_height * m_height + m_width * m_width));
-			std::vector<std::vector<float>> results;
-			float minRes = INFINITY;
-			float maxRes = -INFINITY;
-			float const step = (m_xEnd - m_xStart) / (values - 1);
+			std::vector<std::vector<T>> results;
+			T minRes = INFINITY;
+			T maxRes = -INFINITY;
+			T const step = (m_xEnd - m_xStart) / (values - 1);
 
 			for (auto const& [name, curveData] : m_curvesMap) {
 				auto& resultsVector = results.emplace_back(values);
 				for (int j = 0; j < values; ++j) {
-					float resI = resultsVector[j] = curveData.func(m_xStart + j * step);
+					T resI = resultsVector[j] = curveData.func(m_xStart + j * step);
 					if (resI < minRes) { minRes = resI; }
 					else if (maxRes < resI) { maxRes = resI; }
 				}
@@ -86,12 +88,12 @@ namespace bm {
 
 			m_yStart = std::max(minRes, m_yMin);
 			m_yEnd = std::min(maxRes, m_yMax);
-			m_xScale = (m_width - 1.0f) / (m_xEnd - m_xStart);
-			m_yScale = (m_height - 1.0f) / (m_yEnd - m_yStart);
+			m_xScale = (m_width - 1.0) / (m_xEnd - m_xStart);
+			m_yScale = (m_height - 1.0) / (m_yEnd - m_yStart);
 			{
-				Matrix3f imageToWorld({
-					1.0f / m_xScale,  0,		       m_xStart,
-					0,		         -1.0f / m_yScale, m_yEnd,
+				Matrix<3, 3, T> imageToWorld({
+					1.0 / m_xScale,  0,		       m_xStart,
+					0,		         -1.0 / m_yScale, m_yEnd,
 					0,		          0,		       1
 				});
 				m_worldToImage = imageToWorld.inv();
@@ -102,15 +104,15 @@ namespace bm {
 
 			{
 				int i = 0;
-				float xStep = (m_xEnd - m_xStart) / (values - 1);
+				T xStep = (m_xEnd - m_xStart) / (values - 1);
 				for (auto const& [name, curveData] : m_curvesMap) {
 					auto& resultsVec = results[i];
 					for (int j = 0; j < values - 1; ++j) {
-						float currRes = resultsVec[j];
-						float nextRes = resultsVec[j + 1];
+						T currRes = resultsVec[j];
+						T nextRes = resultsVec[j + 1];
 						if (!isnan(currRes) && !isnan(nextRes)) {
-							Point3f fromWorld(m_xStart + j * xStep, resultsVec[j], 1);
-							Point3f toWorld(m_xStart + (j + 1) * xStep, resultsVec[(j + 1)], 1);
+							Point<3, T> fromWorld(m_xStart + j * xStep, resultsVec[j], 1);
+							Point<3, T> toWorld(m_xStart + (j + 1) * xStep, resultsVec[(j + 1)], 1);
 							drawLine(toImage(fromWorld), toImage(toWorld), curveData.color);
 						}
 					}
@@ -131,17 +133,17 @@ namespace bm {
 		};
 
 		struct XYPlotTargetData {
-			XYPlotTargetData(float x, float y, ColorRGB const &color) : x(x), y(y), color(color) { }
-			float x;
-			float y;
+			XYPlotTargetData(T x, T y, ColorRGB const &color) : x(x), y(y), color(color) { }
+			T x;
+			T y;
 			ColorRGB color;
 		};
 
 		struct XYPlotGridData {
-			XYPlotGridData(float step, ColorRGB const &color, GridType type)
+			XYPlotGridData(T step, ColorRGB const &color, GridType type)
 				: step(step), color(color), type(type) { }
 
-			float step;
+			T step;
 			ColorRGB color;
 			GridType type;
 		};
@@ -169,7 +171,6 @@ namespace bm {
 		}
 
 		void drawCurveNames() {
-			int const curveNumber = m_curvesMap.size();
 			int const charSize = 8;
 			int const verDistanceBetweenLabels = 2;
 			int const horDistanceBetweenLabels = 2;
@@ -179,24 +180,50 @@ namespace bm {
 			int const borderWidth = 1;
 
 			int maxNameLength = 0;
+			int linesNumber = 0;
+			std::map<std::string, std::vector<std::string>> nameLineMap;
 			for (auto const& [name, curveData] : m_curvesMap) {
-				if (name.size() > maxNameLength) maxNameLength = name.size();
+				std::stringstream nameStringStream(name);
+				std::string line;
+				std::vector<std::string> lines;
+				while (std::getline(nameStringStream, line, '\n')) {
+					lines.push_back(line);
+					++linesNumber;
+					if (line.size() > maxNameLength) maxNameLength = line.size();
+				}
+				nameLineMap[name] = lines;
 			}
 
 			int const rectangleWidth = 2 * borderWidth + 2 * rectangleInnerOffset + curveMarkerLen + horDistanceBetweenLabels + maxNameLength * charSize;
-			int const rectangleHeight = 2 * borderWidth + 2 * rectangleInnerOffset + charSize * curveNumber + verDistanceBetweenLabels * (curveNumber - 1);
+			int const rectangleHeight = 2 * borderWidth + 2 * rectangleInnerOffset + charSize * linesNumber + verDistanceBetweenLabels * (linesNumber - 1);
 			int const rectangleLeftTopX = rectangleOutterOffset;
 			int const rectangleLeftTopY = m_height - rectangleInnerOffset - rectangleHeight;
 
 			drawRectangle(rectangleLeftTopX, rectangleLeftTopY, rectangleWidth, rectangleHeight, ColorRGB(0, 0, 0), ColorRGB(255, 255, 255));
 
-			int i = 0;
+			int namesDrawed = 0;
 			int const lineX = rectangleOutterOffset + borderWidth + rectangleInnerOffset;
 			for (auto const& [name, curveData] : m_curvesMap) {
-				int const lineY = rectangleLeftTopY + borderWidth + rectangleInnerOffset + i * (charSize + verDistanceBetweenLabels);
+				int linesDrawed = 0;
+				const auto& lines = nameLineMap[name];
+				const int curvemarkerLine = lines.size() / 2;
+				int lineY = rectangleLeftTopY + borderWidth + rectangleInnerOffset + namesDrawed * (charSize + verDistanceBetweenLabels);
+				for (;
+					linesDrawed < curvemarkerLine;
+					++linesDrawed, lineY += charSize + verDistanceBetweenLabels
+				) {
+					drawString(lineX + curveMarkerLen + horDistanceBetweenLabels, lineY, lines[linesDrawed], ColorRGB(0, 0, 0));
+				}
+				drawString(lineX + curveMarkerLen + horDistanceBetweenLabels, lineY, lines[linesDrawed], ColorRGB(0, 0, 0));
 				drawHorizontalLine(lineX, lineY + charSize / 2, curveMarkerLen, curveData.color);
-				drawString(lineX + curveMarkerLen + horDistanceBetweenLabels, lineY, name, ColorRGB(0, 0, 0));
-				++i;
+				for (;
+					linesDrawed < lines.size();
+					++linesDrawed, lineY += charSize + verDistanceBetweenLabels
+				) {
+					drawString(lineX + curveMarkerLen + horDistanceBetweenLabels, lineY, lines[linesDrawed], ColorRGB(0, 0, 0));
+				}
+
+				namesDrawed += linesDrawed;
 			}
 		}
 
@@ -210,10 +237,10 @@ namespace bm {
 			}
 		}
 
-		void drawTarget(float x, float y, ColorRGB const& color) {
+		void drawTarget(T x, T y, ColorRGB const& color) {
 			int const len = 9;
 			int const lenDiv2 = len / 2;
-			auto targetCenterPoint = toImage(Point3f(x, y, 0));
+			auto targetCenterPoint = toImage(Point<3, T>(x, y, 0));
 			drawHorizontalLine(targetCenterPoint.x - lenDiv2, targetCenterPoint.y, len, color);
 			drawVerticalLine(targetCenterPoint.x, targetCenterPoint.y - lenDiv2, len, color);
 			drawLine(targetCenterPoint - Vector2i(lenDiv2), targetCenterPoint + Vector2i(lenDiv2), color);
@@ -223,32 +250,32 @@ namespace bm {
 	private:
 
 		Point2i getImageZeroPoint() const {
-			return toImage(Point3f(0, 0, 1));
+			return toImage(Point<3, T>(0, 0, 1));
 		}
 
-		Point2i toImage(Point2f const& worldPoint) const {
-			return toImage(Point3f(worldPoint.x, worldPoint.y, 1));
+		Point2i toImage(Point<2, T>const& worldPoint) const {
+			return toImage(Point<3, T>(worldPoint.x, worldPoint.y, 1));
 		}
 
-		Point2i toImage(Point3f const& worldPoint) const {
-			auto imageVector2f = (m_worldToImage * worldPoint).xy();
-			return Point2i(std::round(imageVector2f.x), std::round(imageVector2f.y));
+		Point2i toImage(Point<3, T> const& worldPoint) const {
+			auto imageVector = (m_worldToImage * worldPoint).xy();
+			return Point2i(std::round(imageVector.x), std::round(imageVector.y));
 		}
 
 		bool m_enableXAxis = false;
 		bool m_enableYAxis = false;
 		bool m_enableCurveNamesTable = false;
 
-		float m_xStart = -1.0f;
-		float m_xEnd = 1.0f;
-		float m_yStart = -1.0f;
-		float m_yEnd = 1.0f;
-		float m_xScale = 1.0f;
-		float m_yScale = 1.0f;
-		float m_yMax = std::numeric_limits<float>::max();
-		float m_yMin = std::numeric_limits<float>::min();
+		T m_xStart = -1.0f;
+		T m_xEnd = 1.0f;
+		T m_yStart = -1.0f;
+		T m_yEnd = 1.0f;
+		T m_xScale = 1.0f;
+		T m_yScale = 1.0f;
+		T m_yMax = std::numeric_limits<T>::max();
+		T m_yMin = std::numeric_limits<T>::min();
 
-		Matrix3f m_worldToImage;
+		Matrix<3, 3, T> m_worldToImage;
 
 		ColorRGB m_bgColor = ColorRGB(255, 255, 255);
 

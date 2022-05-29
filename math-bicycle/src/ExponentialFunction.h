@@ -1,5 +1,5 @@
-#ifndef _BICYCLE_EXPONENTIAL_FUNCTION_H_
-#define _BICYCLE_EXPONENTIAL_FUNCTION_H_
+#ifndef _BICYCLE_EXPOTENTIAL_FUNCTION_H_
+#define _BICYCLE_EXPOTENTIAL_FUNCTION_H_
 
 #include <cmath>
 
@@ -10,7 +10,8 @@ namespace bm {
 
 		using FuncT = decltype(std::declval<PowerFuncT>()(0));
 
-		ExponentialFunction(PowerFuncT const& powerFunc) : m_powerFunc(powerFunc) { }
+		ExponentialFunction(PowerFuncT const& powerFunc)
+			: m_powerFunc(powerFunc) { }
 
 		FuncT operator()(FuncT const& arg) const {
 			return std::exp(m_powerFunc(arg));
@@ -31,4 +32,4 @@ namespace bm {
 }
 
 
-#endif _BICYCLE_EXPONENTIAL_FUNCTION_H_
+#endif _BICYCLE_EXPOTENTIAL_FUNCTION_H_

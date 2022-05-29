@@ -26,7 +26,7 @@ add_executable (
 	"src/utils/Fonts.h"
 	"src/Point.h"
 	"src/RationalFunction.h"
-)
+ "src/ExpotentialFunction.h")
 
 add_executable(
   "math_bicycle_test"
@@ -34,7 +34,7 @@ add_executable(
   "tests/Vector_test.cc"
   "tests/PolynomicFunction_test.cc"
   "tests/RationalFunction_test.cc"
-)
+ "src/ExpotentialFunction.h")
 
 target_link_libraries(
   "math_bicycle_test"

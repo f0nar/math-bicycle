@@ -1,6 +1,9 @@
 #ifndef _BICYCLE_RATIONAL_FUNCTION_H_
 #define _BICYCLE_RATIONAL_FUNCTION_H_
 
+#include <array>
+#include "Vector.h"
+#include "Matrix.h"
 #include "PolynomicFunction.h"
 
 namespace bm {
@@ -19,6 +22,11 @@ namespace bm {
 
 		template <typename T2, int NUMERATOR2, int DENOMINATOR2>
 		friend struct RationalFunction;
+
+		RationalFunction(
+			T const (&numerator)[NUMERATOR + 1],
+			T const (&denominator)[DENOMINATOR + 1]
+		) : m_numerator(numerator), m_denominator(denominator) { }
 
 		RationalFunction(
 			PolynomicFunction<NUMERATOR, T> const& numerator,
@@ -77,6 +85,17 @@ namespace bm {
 		#undef POLYNOMIC_FUNCTION_PARAMETER_T
 		#undef POLYNOMIC_FUNCTION_ADDITION_RES_T
 
+		std::string toString() const {
+			std::string const numeratorString = m_numerator.toString();
+			std::string const denominatorString = m_denominator.toString();
+			int const dividorLength = std::max(numeratorString.size(), denominatorString.size());
+			std::string const dividorString = std::string(dividorLength, '-');
+			return 
+				numeratorString + "\n" +
+				dividorString + "\n" +
+				denominatorString;
+		}
+
 	private:
 
 		PolynomicFunction<NUMERATOR, T> m_numerator;
@@ -91,6 +110,34 @@ namespace bm {
 			denominator
 		);
 	}
+
+	template <typename T, int NUMERATOR, int DENOMINATOR>
+	RationalFunction<T, NUMERATOR, DENOMINATOR> fitToRat(std::array<Vector<2, T>, (NUMERATOR + DENOMINATOR + 1)> const& data) {
+		int const Dimension = NUMERATOR + DENOMINATOR + 1;
+		Matrix<Dimension, Dimension, T> coefMat;
+		Vector<Dimension, T> resVec;
+		for (int i = 0; i < Dimension; ++i) {
+			int j = 0;
+			for (; j < NUMERATOR; ++j) {
+				coefMat[i][j] = std::pow(data[i].x, NUMERATOR - j - 1);
+			}
+			for (; j < Dimension; ++j) {
+				coefMat[i][j] = -std::pow(data[i].x, DENOMINATOR - (j - NUMERATOR)) * data[i].y;
+			}
+			resVec[i] = -std::pow(data[i].x, NUMERATOR);
+		}
+		Vector<Dimension, T> resCoef = coefMat.inv() * resVec;
+		T numCoef[NUMERATOR + 1] = { T { 1 } };
+		T denomCoef[DENOMINATOR + 1];
+		for (int i = 0; i < NUMERATOR; ++i) {
+			numCoef[i + 1] = resCoef.at(i);
+		}
+		for (int i = 0; i <= DENOMINATOR; ++i) {
+			denomCoef[i] = resCoef.at(NUMERATOR + i);
+		}
+		return RationalFunction<T, NUMERATOR, DENOMINATOR>(numCoef, denomCoef);
+	}
+
 
 	#undef BINARY_OPERATOR
 

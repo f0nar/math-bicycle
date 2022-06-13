@@ -8,6 +8,7 @@
 
 #include "Matrix.h"
 #include "Vector.h"
+#include "Function.h"
 
 namespace bm {
 
@@ -15,14 +16,8 @@ namespace bm {
 
 	#define POL_FUNC_POW(N1, N2) (N1 + N2)
 
-	template <typename T>
-	struct Function {
-		virtual std::string toString() const = 0;
-		virtual T operator()(T const& arg) const = 0;
-	};
-
 	template <int N, typename T>
-	struct PolynomicFunction : Function<T> {
+	struct PolynomicFunction : public Function<T> {
 
 		template <int N2, typename T2>
 		friend struct PolynomicFunction;

@@ -26,7 +26,8 @@ add_executable (
 	"src/utils/Fonts.h"
 	"src/Point.h"
 	"src/RationalFunction.h"
- "src/ExpotentialFunction.h")
+	"src/Function.h"
+)
 
 add_executable(
   "math_bicycle_test"
@@ -34,14 +35,17 @@ add_executable(
   "tests/Vector_test.cc"
   "tests/PolynomicFunction_test.cc"
   "tests/RationalFunction_test.cc"
- "src/ExpotentialFunction.h")
+  "src/Function.h"
+ )
 
 target_link_libraries(
   "math_bicycle_test"
   "gtest_main"
 )
 
-add_subdirectory ("tasks")
+add_subdirectory(
+	"tasks"
+)
 
 include(GoogleTest)
 gtest_discover_tests(math_bicycle_test)

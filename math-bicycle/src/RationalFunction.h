@@ -5,6 +5,7 @@
 #include "Vector.h"
 #include "Matrix.h"
 #include "PolynomicFunction.h"
+#include "Function.h"
 
 namespace bm {
 
@@ -18,7 +19,7 @@ namespace bm {
 	}
 
 	template <typename T, int NUMERATOR, int DENOMINATOR = 0>
-	struct RationalFunction {
+	struct RationalFunction : public Function<T> {
 
 		template <typename T2, int NUMERATOR2, int DENOMINATOR2>
 		friend struct RationalFunction;
@@ -85,7 +86,7 @@ namespace bm {
 		#undef POLYNOMIC_FUNCTION_PARAMETER_T
 		#undef POLYNOMIC_FUNCTION_ADDITION_RES_T
 
-		std::string toString() const {
+		std::string toString() const override {
 			std::string const numeratorString = m_numerator.toString();
 			std::string const denominatorString = m_denominator.toString();
 			int const dividorLength = std::max(numeratorString.size(), denominatorString.size());

@@ -17,7 +17,7 @@ namespace bm {
 	#define POL_FUNC_POW(N1, N2) (N1 + N2)
 
 	template <int N, typename T>
-	struct PolynomicFunction : public Function<T> {
+	struct PolynomicFunction {
 
 		template <int N2, typename T2>
 		friend struct PolynomicFunction;

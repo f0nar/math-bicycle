@@ -19,7 +19,7 @@ namespace bm {
 	}
 
 	template <typename T, int NUMERATOR, int DENOMINATOR = 0>
-	struct RationalFunction : public Function<T> {
+	struct RationalFunction {
 
 		template <typename T2, int NUMERATOR2, int DENOMINATOR2>
 		friend struct RationalFunction;
@@ -86,7 +86,7 @@ namespace bm {
 		#undef POLYNOMIC_FUNCTION_PARAMETER_T
 		#undef POLYNOMIC_FUNCTION_ADDITION_RES_T
 
-		std::string toString() const override {
+		std::string toString() const {
 			std::string const numeratorString = m_numerator.toString();
 			std::string const denominatorString = m_denominator.toString();
 			int const dividorLength = std::max(numeratorString.size(), denominatorString.size());

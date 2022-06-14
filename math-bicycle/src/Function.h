@@ -6,46 +6,46 @@
 
 namespace bm {
 
-    template <typename T>
-    struct Function {
-        virtual std::string toString() const = 0;
-        virtual T operator()(T const& arg) const = 0;
-    };
+    template <typename InnerFunc, typename Func>
+    class Function {
 
-    template <typename FuncT>
-    class CompositeFunction : public Function<decltype(std::declval<FuncT>()(0))>
-    {
+        InnerFunc inner_;
+        Func f_;
+        std::string name_;
 
-        using ValT = decltype(std::declval<FuncT>()(0));
-        Function<ValT> const &m_innerFunc;
-        FuncT m_func;
-        std::string m_funcName;
+        using RetT = decltype(std::declval<InnerFunc>()(0));
 
     public:
 
-        CompositeFunction(Function<ValT> const& inner, FuncT f, std::string const &funcName)
-            : m_innerFunc(inner), m_func(f), m_funcName(funcName) { }
+        Function(InnerFunc inner, Func f, std::string const& funcName)
+            : inner_(inner), f_(f), name_(funcName) {}
 
-        virtual ValT operator()(ValT const &x) const override {
-            return m_func(m_innerFunc(x));
+        RetT operator()(RetT x) {
+            return f_(inner_(x));
         }
 
-        virtual std::string toString() const override {
-            return m_funcName + '(' + m_innerFunc.toString() + ')';
+        std::string  toString() const {
+            return name_ + '(' + inner_.toString() + ')';
         }
 
     };
 
     #define DEFINE_FUNC(FUNC) \
-    template <typename T> \
-    auto FUNC(Function<T> const &f) { \
-        T (*pF) (T) = std::FUNC; \
-        return CompositeFunction<decltype(pF)>(f, pF, #FUNC); \
+    template <typename InnerFunc> \
+    auto FUNC(InnerFunc f) { \
+        using  RetT = decltype(std::declval<InnerFunc>()(0)); \
+        RetT (*pF) (RetT) = std::FUNC; \
+        return Function<InnerFunc, decltype(pF)>(f, pF, #FUNC); \
     }
 
     DEFINE_FUNC(sin);
     DEFINE_FUNC(cos); 
     DEFINE_FUNC(exp);
+    DEFINE_FUNC(sqrt);
+    DEFINE_FUNC(log);
+    DEFINE_FUNC(log10);
+    DEFINE_FUNC(sinh);
+    DEFINE_FUNC(cosh);
 
 }
 

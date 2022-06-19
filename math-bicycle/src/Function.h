@@ -6,6 +6,29 @@
 
 namespace bm {
 
+    #define MULTIPLIER Multiplier
+    #define ADDER Adder
+    #define DIVIDOR Dividor
+
+    #define DEFINE_FUNC_OPERATOR(NAME, OP) \
+    template <typename LeftFunc, typename RightFunc> \
+    class NAME { \
+        LeftFunc left_; \
+        RightFunc right_; \
+        using ValT = decltype(std::declval<LeftFunc>()(0) OP std::declval<RightFunc>()(0)); \
+    public: \
+        NAME(LeftFunc const& left, RightFunc const& right) : left_(left), right_(right) {} \
+        auto operator()(ValT const& arg) const { return left_(arg) OP right_(arg); } \
+        template <typename RightFunc> auto operator *(RightFunc const& right) const { return MULTIPLIER <NAME, RightFunc>(*this, right); } \
+        template <typename RightFunc> auto operator +(RightFunc const& right) const { return ADDER <NAME, RightFunc>(*this, right); } \
+        template <typename RightFunc> auto operator /(RightFunc const& right) const { return DIVIDOR <NAME, RightFunc>(*this, right); } \
+        std::string toString() const { return '(' + left_.toString() + ')' + #OP + '(' + right_.toString() + ')'; } \
+    };
+
+    DEFINE_FUNC_OPERATOR(MULTIPLIER, *);
+    DEFINE_FUNC_OPERATOR(ADDER, +);
+    DEFINE_FUNC_OPERATOR(DIVIDOR, /);
+
     template <typename InnerFunc, typename Func>
     class Function {
 
@@ -20,12 +43,27 @@ namespace bm {
         Function(InnerFunc inner, Func f, std::string const& funcName)
             : inner_(inner), f_(f), name_(funcName) {}
 
-        RetT operator()(RetT x) {
+        RetT operator()(RetT x) const {
             return f_(inner_(x));
         }
 
         std::string  toString() const {
             return name_ + '(' + inner_.toString() + ')';
+        }
+
+        template <typename RightFunc>
+        auto operator*(RightFunc const &right) const {
+            return Multiplier<Function, RightFunc>(*this, right);
+        }
+
+        template <typename RightFunc>
+        auto operator+(RightFunc const& right) const {
+            return Adder<Function, RightFunc>(*this, right);
+        }
+
+        template <typename RightFunc>
+        auto operator/(RightFunc const& right) const {
+            return Dividor<Function, RightFunc>(*this, right);
         }
 
     };

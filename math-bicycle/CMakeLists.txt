@@ -36,7 +36,7 @@ add_executable(
   "tests/PolynomicFunction_test.cc"
   "tests/RationalFunction_test.cc"
   "src/Function.h"
- )
+)
 
 target_link_libraries(
   "math_bicycle_test"
